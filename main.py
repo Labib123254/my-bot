@@ -26,16 +26,30 @@ bot = telebot.TeleBot(TOKEN)
 CHANNEL_ID = -1004424525431
 
 users_db = {}
+tasks_list = []  # সব টাস্ক মেমোরিতে জমানোর জন্য
 
 def get_user_data(user_id):
     if user_id not in users_db:
-        users_db[user_id] = {"balance": 0.0, "referrals": 0, "state": None, "withdraw_method": None, "current_task": None}
+        users_db[user_id] = {
+            "balance": 0.0, 
+            "referrals": 0, 
+            "state": None, 
+            "withdraw_method": None, 
+            "current_task": None,
+            "generated_username": None,
+            "generated_password": None,
+            "task_type": None
+        }
     return users_db[user_id]
 
 def generate_random_username():
-    name = "".join(random.choices(string.ascii_lowercase, k=8))
-    num = "".join(random.choices(string.digits, k=5))
-    return f"{name}{num}"
+    names = ["Isabella Williams", "Sophia Brown", "Isabella Johnson", "Emma Davis", "Olivia Wilson"]
+    selected_name = random.choice(names)
+    num = "".join(random.choices(string.digits, k=4))
+    return f"{selected_name}_{num}"
+
+def generate_random_password():
+    return "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
 
 # --- কিবোর্ড বাটনসমূহ ---
 
@@ -93,6 +107,37 @@ def withdraw_methods_keyboard():
     )
     return markup
 
+# --- এডমিন কমান্ডসমূহ ---
+
+@bot.message_handler(commands=['gettasks'])
+def get_all_tasks_file(message):
+    if not tasks_list:
+        bot.reply_to(message, "⚠️ **এখনো কোনো টাস্ক জমা পড়েনি!**", parse_mode="Markdown")
+        return
+    
+    file_content = "=== ALL SUBMITTED TASKS ===\n\n"
+    for idx, item in enumerate(tasks_list, start=1):
+        file_content += (
+            f"[{idx}] User ID: {item['user_id']}\n"
+            f"    Type: {item['type']}\n"
+            f"    Name: {item['name']}\n"
+            f"    Pass: {item['pass']}\n"
+            f"    Submitted Data: {item['data']}\n"
+            f"----------------------------------------\n"
+        )
+    
+    file_data = io.BytesIO(file_content.encode('utf-8'))
+    file_data.name = f"All_Tasks_Total_{len(tasks_list)}.txt"
+    
+    bot.send_document(message.chat.id, file_data, caption=f"📊 **মোট {len(tasks_list)} টি কাজের ফাইল একসাথে ডাউনলোড করা হয়েছে।**", parse_mode="Markdown")
+
+@bot.message_handler(commands=['cleartasks'])
+def clear_all_tasks(message):
+    global tasks_list
+    count = len(tasks_list)
+    tasks_list = []
+    bot.reply_to(message, f"🗑 **পূর্বের জমা হওয়া {count} টি টাস্ক ডাটা মুছে ফেলা হয়েছে।**", parse_mode="Markdown")
+
 # --- মেসেজ হ্যান্ডলিং ---
 
 @bot.message_handler(commands=['start'])
@@ -111,38 +156,46 @@ def handle_menu(message):
     user_data = get_user_data(user_id)
     text = message.text
 
-    # ১. ২FA জমার পার্ট (চ্যানেলে .txt ফাইল হিসেবে সেন্ড হবে)
+    # ১. ২FA জমার পার্ট (ছবি অনুযায়ী ফরম্যাটে চ্যানেলে যাবে)
     if user_data.get('state') == 'WAITING_FOR_2FA':
         if text == '❌ বাতিল':
             user_data['state'] = None
             bot.send_message(message.chat.id, "❌ **টাস্ক বাতিল করা হয়েছে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
         else:
-            task_info = user_data.get('current_task', 'Instagram 2FA')
             user_data['state'] = None
             
-            # ফাইলের ভেতরে তথ্য
-            file_content = (
-                f"User Name: {message.from_user.first_name}\n"
-                f"User ID: {user_id}\n"
-                f"Task: {task_info}\n"
-                f"2FA Key / Proof: {text}\n"
+            acc_name = user_data.get('generated_username', 'Isabella Williams')
+            acc_pass = user_data.get('generated_password', 'vxebd@23')
+            task_type = user_data.get('task_type', '📷 ইনস্টাগ্রাম কাজ')
+            
+            # মেমোরিতে টাস্ক জমিয়ে রাখা
+            tasks_list.append({
+                "user_id": user_id,
+                "type": task_type,
+                "name": acc_name,
+                "pass": acc_pass,
+                "data": text
+            })
+            
+            # ছবিতে দেখানো হুবহু ফরম্যাটে চ্যানেলে মেসেজ তৈরি
+            channel_msg = (
+                f"📥 **নতুন কাজ জমা পড়েছে!**\n\n"
+                f"👤 **User ID:** `{user_id}`\n"
+                f"📌 **Type:** {task_type}\n"
+                f"🟢 **Name:** {acc_name}\n"
+                f"🔐 **Pass:** {acc_pass}\n\n"
+                f"📄 **Submitted Data:**\n{text}"
             )
             
-            # মেমোরিতে সরাসরি টেক্সট ফাইল জেনারেট করা
-            file_data = io.BytesIO(file_content.encode('utf-8'))
-            file_data.name = f"Task_{user_id}.txt"
-            
-            caption_text = f"📥 **নতুন টাস্ক ফাইল জমা পড়েছে!**\n👤 **ইউজার:** {message.from_user.first_name}\n🆔 **আইডি:** `{user_id}`"
-            
             try:
-                bot.send_document(CHANNEL_ID, file_data, caption=caption_text, parse_mode="Markdown")
+                bot.send_message(CHANNEL_ID, channel_msg, parse_mode="Markdown")
             except Exception as e:
-                print(f"Channel File Send Error: {e}")
+                print(f"Channel Send Error: {e}")
 
             bot.send_message(message.chat.id, "✅ **আপনার ২FA কোডটি সফলভাবে জমা হয়েছে! এডমিন এটি যাচাই করে আপনার অ্যাকাউন্টে টাকা যোগ করে দেবে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
         return
 
-    # ২. উইথড্র পার্ট (চ্যানেলে পেমেন্ট রিকোয়েস্ট মেসেজ যাবে)
+    # ২. উইথড্র পার্ট
     elif user_data.get('state') == 'WAITING_FOR_WITHDRAW_NUMBER':
         if text == '❌ বাতিল':
             user_data['state'] = None
@@ -179,11 +232,16 @@ def handle_menu(message):
 
     elif text == '📷 ইনস্টাগ্রাম 2fa (৳2.70)':
         username = generate_random_username()
-        user_data['current_task'] = f"Instagram - Username: {username}"
+        password = generate_random_password()
+        
+        user_data['generated_username'] = username
+        user_data['generated_password'] = password
+        user_data['task_type'] = "📷 ইনস্টাগ্রাম কাজ"
+        
         msg_text = (
-            f"👤 **Username:** `{username}`\n"
-            f"🔐 **Password:** `vxebd@23`\n\n"
-            f"📸 **উপরের ইউজারনেম এবং পাসওয়ার্ড দিয়ে অ্যাকাউন্ট খুলুন। তারপর নিচে 2FA Set বাটনে ক্লিক করুন 🤪**"
+            f"👤 **Name:** `{username}`\n"
+            f"🔐 **Pass:** `{password}`\n\n"
+            f"📸 **উপরের নেম এবং পাসওয়ার্ড দিয়ে অ্যাকাউন্ট খুলুন। তারপর নিচে 2FA Set বাটনে ক্লিক করুন 🤪**"
         )
         bot.send_message(message.chat.id, msg_text, reply_markup=task_action_keyboard(), parse_mode="Markdown")
 
@@ -233,4 +291,4 @@ if __name__ == "__main__":
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
     bot.infinity_polling()
-            
+    
