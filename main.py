@@ -156,70 +156,68 @@ def handle_menu(message):
     user_data = get_user_data(user_id)
     text = message.text
 
-    # ১. ২FA জমার পার্ট (ছবি অনুযায়ী ফরম্যাটে চ্যানেলে যাবে)
-    if user_data.get('state') == 'WAITING_FOR_2FA':
-        if text == '❌ বাতিল':
-            user_data['state'] = None
-            bot.send_message(message.chat.id, "❌ **টাস্ক বাতিল করা হয়েছে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
-        else:
-            user_data['state'] = None
-            
-            acc_name = user_data.get('generated_username', 'Isabella Williams')
-            acc_pass = user_data.get('generated_password', 'vxebd@23')
-            task_type = user_data.get('task_type', '📷 ইনস্টাগ্রাম কাজ')
-            
-            # মেমোরিতে টাস্ক জমিয়ে রাখা
-            tasks_list.append({
-                "user_id": user_id,
-                "type": task_type,
-                "name": acc_name,
-                "pass": acc_pass,
-                "data": text
-            })
-            
-            # ছবিতে দেখানো হুবহু ফরম্যাটে চ্যানেলে মেসেজ তৈরি
-            channel_msg = (
-                f"📥 **নতুন কাজ জমা পড়েছে!**\n\n"
-                f"👤 **User ID:** `{user_id}`\n"
-                f"📌 **Type:** {task_type}\n"
-                f"🟢 **Name:** {acc_name}\n"
-                f"🔐 **Pass:** {acc_pass}\n\n"
-                f"📄 **Submitted Data:**\n{text}"
-            )
-            
-            try:
-                bot.send_message(CHANNEL_ID, channel_msg, parse_mode="Markdown")
-            except Exception as e:
-                print(f"Channel Send Error: {e}")
+    # বাতিল বা মেনুতে ফিরে যাওয়ার কমন হ্যান্ডলিং
+    if text == '❌ বাতিল':
+        user_data['state'] = None
+        bot.send_message(message.chat.id, "❌ **বাতিল করা হয়েছে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
+        return
 
-            bot.send_message(message.chat.id, "✅ **আপনার ২FA কোডটি সফলভাবে জমা হয়েছে! এডমিন এটি যাচাই করে আপনার অ্যাকাউন্টে টাকা যোগ করে দেবে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
+    # ১. ২FA জমার পার্ট
+    if user_data.get('state') == 'WAITING_FOR_2FA':
+        user_data['state'] = None
+        
+        acc_name = user_data.get('generated_username', 'Isabella Williams')
+        acc_pass = user_data.get('generated_password', 'vxebd@23')
+        task_type = user_data.get('task_type', '📷 ইনস্টাগ্রাম কাজ')
+        
+        # মেমোরিতে টাস্ক জমিয়ে রাখা
+        tasks_list.append({
+            "user_id": user_id,
+            "type": task_type,
+            "name": acc_name,
+            "pass": acc_pass,
+            "data": text
+        })
+        
+        # চ্যানেলে মেসেজ পাঠানো
+        channel_msg = (
+            f"📥 **নতুন কাজ জমা পড়েছে!**\n\n"
+            f"👤 **User ID:** `{user_id}`\n"
+            f"📌 **Type:** {task_type}\n"
+            f"🟢 **Name:** {acc_name}\n"
+            f"🔐 **Pass:** {acc_pass}\n\n"
+            f"📄 **Submitted Data:**\n{text}"
+        )
+        
+        try:
+            bot.send_message(CHANNEL_ID, channel_msg, parse_mode="Markdown")
+        except Exception as e:
+            print(f"Channel Send Error: {e}")
+
+        bot.send_message(message.chat.id, "✅ **আপনার ২FA কোডটি সফলভাবে জমা হয়েছে! এডমিন এটি যাচাই করে আপনার অ্যাকাউন্টে টাকা যোগ করে দেবে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
         return
 
     # ২. উইথড্র পার্ট
     elif user_data.get('state') == 'WAITING_FOR_WITHDRAW_NUMBER':
-        if text == '❌ বাতিল':
-            user_data['state'] = None
-            bot.send_message(message.chat.id, "❌ **উইথড্র বাতিল করা হয়েছে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
-        else:
-            method = user_data.get('withdraw_method', 'N/A')
-            amount = user_data['balance']
-            user_data['state'] = None
-            
-            notify_msg = (
-                f"💰 **নতুন উইথড্রয়াল রিকোয়েস্ট!**\n\n"
-                f"👤 **ইউজার:** {message.from_user.first_name}\n"
-                f"🆔 **আইডি:** `{user_id}`\n"
-                f"💵 **পরিমাণ:** {amount} টাকা\n"
-                f"🏦 **মেথড:** {method}\n"
-                f"📱 **নম্বর:** `{text}`"
-            )
-            
-            try:
-                bot.send_message(CHANNEL_ID, notify_msg, parse_mode="Markdown")
-            except Exception as e:
-                print(f"Channel Notification Error: {e}")
+        method = user_data.get('withdraw_method', 'N/A')
+        amount = user_data['balance']
+        user_data['state'] = None
+        
+        notify_msg = (
+            f"💰 **নতুন উইথড্রয়াল রিকোয়েস্ট!**\n\n"
+            f"👤 **ইউজার:** {message.from_user.first_name}\n"
+            f"🆔 **আইডি:** `{user_id}`\n"
+            f"💵 **পরিমাণ:** {amount} টাকা\n"
+            f"🏦 **মেথড:** {method}\n"
+            f"📱 **নম্বর:** `{text}`"
+        )
+        
+        try:
+            bot.send_message(CHANNEL_ID, notify_msg, parse_mode="Markdown")
+        except Exception as e:
+            print(f"Channel Notification Error: {e}")
 
-            bot.send_message(message.chat.id, f"✅ **আপনার {amount} টাকা উইথড্রয়াল রিকোয়েস্ট জমা হয়েছে!**", reply_markup=main_keyboard(), parse_mode="Markdown")
+        bot.send_message(message.chat.id, f"✅ **আপনার {amount} টাকা উইথড্রয়াল রিকোয়েস্ট জমা হয়েছে!**", reply_markup=main_keyboard(), parse_mode="Markdown")
         return
 
     # --- মেনু অ্যাকশনসমূহ ---
@@ -263,10 +261,6 @@ def handle_menu(message):
 
     elif text == '⏮ ফিরে যান':
         bot.send_message(message.chat.id, "🟣 **সিলেক্ট করুন:**", reply_markup=category_keyboard(), parse_mode="Markdown")
-
-    elif text == '❌ বাতিল':
-        user_data['state'] = None
-        bot.send_message(message.chat.id, "❌ **বাতিল করা হয়েছে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
 
     elif text == '💵 ব্যালেন্স':
         bal = user_data["balance"]
