@@ -1,4 +1,5 @@
 import os
+import io
 import threading
 import random
 import string
@@ -6,7 +7,7 @@ from flask import Flask
 import telebot
 from telebot import types
 
-# ১. Web Server
+# ১. Web Server setup
 app = Flask(__name__)
 
 @app.route('/')
@@ -21,11 +22,14 @@ def run_flask():
 TOKEN = '8720565653:AAFltxQwffiTi5DmTwQKud-Wh1SkZlyVHm8'
 bot = telebot.TeleBot(TOKEN)
 
+# আপনার চ্যানেল আইডি
+CHANNEL_ID = -1004424525431
+
 users_db = {}
 
 def get_user_data(user_id):
     if user_id not in users_db:
-        users_db[user_id] = {"balance": 0.0, "referrals": 0, "state": None}
+        users_db[user_id] = {"balance": 0.0, "referrals": 0, "state": None, "withdraw_method": None, "current_task": None}
     return users_db[user_id]
 
 def generate_random_username():
@@ -33,7 +37,8 @@ def generate_random_username():
     num = "".join(random.choices(string.digits, k=5))
     return f"{name}{num}"
 
-# মেনু কিবোর্ডসমূহ
+# --- কিবোর্ড বাটনসমূহ ---
+
 def main_keyboard():
     markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
     markup.add(
@@ -78,6 +83,18 @@ def cancel_keyboard():
     markup.add(types.KeyboardButton('❌ বাতিল'))
     return markup
 
+def withdraw_methods_keyboard():
+    markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
+    markup.add(
+        types.KeyboardButton('Bkash'),
+        types.KeyboardButton('Nagad'),
+        types.KeyboardButton('Rocket'),
+        types.KeyboardButton('❌ বাতিল')
+    )
+    return markup
+
+# --- মেসেজ হ্যান্ডলিং ---
+
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user_id = message.from_user.id
@@ -94,16 +111,75 @@ def handle_menu(message):
     user_data = get_user_data(user_id)
     text = message.text
 
-    # ১. প্রধান কাজের ক্যাটাগরি
+    # ১. ২FA জমার পার্ট (চ্যানেলে .txt ফাইল হিসেবে সেন্ড হবে)
+    if user_data.get('state') == 'WAITING_FOR_2FA':
+        if text == '❌ বাতিল':
+            user_data['state'] = None
+            bot.send_message(message.chat.id, "❌ **টাস্ক বাতিল করা হয়েছে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
+        else:
+            task_info = user_data.get('current_task', 'Instagram 2FA')
+            user_data['state'] = None
+            
+            # ফাইলের ভেতরে তথ্য
+            file_content = (
+                f"User Name: {message.from_user.first_name}\n"
+                f"User ID: {user_id}\n"
+                f"Task: {task_info}\n"
+                f"2FA Key / Proof: {text}\n"
+            )
+            
+            # মেমোরিতে সরাসরি টেক্সট ফাইল জেনারেট করা
+            file_data = io.BytesIO(file_content.encode('utf-8'))
+            file_data.name = f"Task_{user_id}.txt"
+            
+            caption_text = f"📥 **নতুন টাস্ক ফাইল জমা পড়েছে!**\n👤 **ইউজার:** {message.from_user.first_name}\n🆔 **আইডি:** `{user_id}`"
+            
+            try:
+                bot.send_document(CHANNEL_ID, file_data, caption=caption_text, parse_mode="Markdown")
+            except Exception as e:
+                print(f"Channel File Send Error: {e}")
+
+            bot.send_message(message.chat.id, "✅ **আপনার ২FA কোডটি সফলভাবে জমা হয়েছে! এডমিন এটি যাচাই করে আপনার অ্যাকাউন্টে টাকা যোগ করে দেবে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
+        return
+
+    # ২. উইথড্র পার্ট (চ্যানেলে পেমেন্ট রিকোয়েস্ট মেসেজ যাবে)
+    elif user_data.get('state') == 'WAITING_FOR_WITHDRAW_NUMBER':
+        if text == '❌ বাতিল':
+            user_data['state'] = None
+            bot.send_message(message.chat.id, "❌ **উইথড্র বাতিল করা হয়েছে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
+        else:
+            method = user_data.get('withdraw_method', 'N/A')
+            amount = user_data['balance']
+            user_data['state'] = None
+            
+            notify_msg = (
+                f"💰 **নতুন উইথড্রয়াল রিকোয়েস্ট!**\n\n"
+                f"👤 **ইউজার:** {message.from_user.first_name}\n"
+                f"🆔 **আইডি:** `{user_id}`\n"
+                f"💵 **পরিমাণ:** {amount} টাকা\n"
+                f"🏦 **মেথড:** {method}\n"
+                f"📱 **নম্বর:** `{text}`"
+            )
+            
+            try:
+                bot.send_message(CHANNEL_ID, notify_msg, parse_mode="Markdown")
+            except Exception as e:
+                print(f"Channel Notification Error: {e}")
+
+            bot.send_message(message.chat.id, f"✅ **আপনার {amount} টাকা উইথড্রয়াল রিকোয়েস্ট জমা হয়েছে!**", reply_markup=main_keyboard(), parse_mode="Markdown")
+        return
+
+    # --- মেনু অ্যাকশনসমূহ ---
+
     if text == '📖 কাজ ▸':
         bot.send_message(message.chat.id, "🟣 **সিলেক্ট করুন:**", reply_markup=category_keyboard(), parse_mode="Markdown")
 
     elif text == '📷 ইনস্টাগ্রাম কাজ >':
         bot.send_message(message.chat.id, "🟣 **সিলেক্ট করুন:**", reply_markup=instagram_sub_keyboard(), parse_mode="Markdown")
 
-    # ২. ইনস্টাগ্রাম অ্যাকাউন্ট তৈরির টাস্ক জেনারেট
     elif text == '📷 ইনস্টাগ্রাম 2fa (৳2.70)':
         username = generate_random_username()
+        user_data['current_task'] = f"Instagram - Username: {username}"
         msg_text = (
             f"👤 **Username:** `{username}`\n"
             f"🔐 **Password:** `vxebd@23`\n\n"
@@ -115,29 +191,28 @@ def handle_menu(message):
         user_data['state'] = 'WAITING_FOR_2FA'
         bot.send_message(message.chat.id, "📢 **2FA Key টি দিন:** 🎯", reply_markup=cancel_keyboard(), parse_mode="Markdown")
 
-    # ৩. ২FA Key ইনপুট গ্রহণ
-    elif user_data.get('state') == 'WAITING_FOR_2FA':
-        if text == '❌ বাতিল':
-            user_data['state'] = None
-            bot.send_message(message.chat.id, "❌ **বাতিল করা হয়েছে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
+    elif text == '💰 টাকা উত্তোলন':
+        if user_data['balance'] < 50:
+            bot.reply_to(message, f"❌ **আপনার ব্যালেন্স পর্যাপ্ত নয়!**\nবর্তমান ব্যালেন্স: {user_data['balance']} টাকা।\nসর্বনিম্ন উইথড্র: ৫০ টাকা।")
         else:
-            user_data['state'] = None
-            bot.send_message(message.chat.id, "✅ **আপনার ২FA সফলভাবে গৃহীত হয়েছে! তথ্য যাচাই করার পর ব্যালেন্স যোগ করা হবে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
+            user_data['state'] = 'SELECT_WITHDRAW_METHOD'
+            bot.send_message(message.chat.id, "🏦 **পেমেন্ট মেথড সিলেক্ট করুন:**", reply_markup=withdraw_methods_keyboard(), parse_mode="Markdown")
 
-    # ৪. ফেরত এবং বাতিলের বাটনসমূহ
+    elif text in ['Bkash', 'Nagad', 'Rocket']:
+        user_data['withdraw_method'] = text
+        user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
+        bot.send_message(message.chat.id, f"📱 **আপনার {text} নম্বরটি লিখে পাঠান:**", reply_markup=cancel_keyboard(), parse_mode="Markdown")
+
     elif text == '⏮ ফিরে যান':
         bot.send_message(message.chat.id, "🟣 **সিলেক্ট করুন:**", reply_markup=category_keyboard(), parse_mode="Markdown")
 
     elif text == '❌ বাতিল':
+        user_data['state'] = None
         bot.send_message(message.chat.id, "❌ **বাতিল করা হয়েছে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
 
-    # ৫. অন্যান্য মূল মেনু
     elif text == '💵 ব্যালেন্স':
         bal = user_data["balance"]
         bot.reply_to(message, f"👤 **আপনার প্রোফাইল:**\n\n💰 বর্তমান ব্যালেন্স: {bal} টাকা\n👥 মোট রেফারাল: {user_data['referrals']} জন", parse_mode="Markdown")
-
-    elif text == '💰 টাকা উত্তোলন':
-        bot.reply_to(message, "উত্তোলনের জন্য সর্বনিম্ন ব্যালেন্স ১০০ টাকা।")
 
     elif text == '🎁 My Referrals':
         bot_username = bot.get_me().username
@@ -158,4 +233,4 @@ if __name__ == "__main__":
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
     bot.infinity_polling()
-    
+            
