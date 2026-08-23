@@ -22,7 +22,7 @@ def run_flask():
 TOKEN = '8720565653:AAFltxQwffiTi5DmTwQKud-Wh1SkZlyVHm8'
 bot = telebot.TeleBot(TOKEN)
 
-# আপনার চ্যানেল আইডি
+# আপনার সঠিক চ্যানেল আইডি
 CHANNEL_ID = -1004424525431
 
 users_db = {}
