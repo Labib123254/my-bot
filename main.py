@@ -57,17 +57,15 @@ def get_user_data(user_id):
         }
     return users_db[user_id]
 
-# ইউজার চ্যানেলে জয়েন করেছে কি না তা নিখুঁতভাবে চেক করার ফাংশন
+# ইউজার চ্যানেলে জয়েন করেছে কি না তা চেক করার ফাংশন
 def check_user_subscription(user_id):
     try:
-        # বটকে অবশ্যই চ্যানেলের অ্যাডমিন হতে হবে, তবেই এটি কাজ করবে
         member = bot.get_chat_member(CHANNEL_USERNAME, user_id)
         if member.status in ['member', 'creator', 'administrator']:
             return True
         else:
             return False
     except Exception as e:
-        # কোনো কারণে এপিআই এরর দিলে ডিফল্টভাবে False রিটার্ন করবে যাতে সাবস্ক্রিপশন মিস না হয়
         return False
 
 def generate_random_username():
@@ -233,7 +231,7 @@ def send_welcome(message):
         except ValueError:
             pass
 
-    # ফোর্চ সাবস্ক্রিপশন চেক
+    # ফোর্চ সাবস্ক্রিপশন চেক (চ্যানেলে জয়েন না থাকলে স্ক্রিনশটের মতো মেসেজ দেখাবে)
     if not check_user_subscription(user_id):
         sub_msg = (
             f"📢 To use this bot you must subscribe to our channel: {CHANNEL_USERNAME}\n\n"
@@ -242,20 +240,22 @@ def send_welcome(message):
         bot.send_message(message.chat.id, sub_msg, reply_markup=subscription_markup())
         return
 
+    # চ্যানেলে জয়েন করা থাকলে সরাসরি স্বাগতম মেসেজ ও মেনু দেখাবে
     welcome_msg = f"🥰 স্বাগতম, {first_name}!\n💎 কাজ শুরু করতে নিচের অপশনগুলো ব্যবহার করুন 🔽"
     bot.send_message(message.chat.id, welcome_msg, reply_markup=main_keyboard(), parse_mode="Markdown")
 
 @bot.callback_query_handler(func=lambda call: call.data == "check_sub")
 def callback_check_sub(call):
     user_id = call.from_user.id
+    first_name = call.from_user.first_name
     if check_user_subscription(user_id):
         bot.answer_callback_query(call.id, "✅ ধন্যবাদ! আপনার সাবস্ক্রিপশন ভেরিফাই হয়েছে।")
         try:
             bot.delete_message(call.message.chat.id, call.message.message_id)
         except:
             pass
-        welcome_msg = f"🥰 স্বাগতম!\n💎 কাজ শুরু করতে নিচের অপশনগুলো ব্যবহার করুন 🔽"
-        bot.send_message(call.message.chat.id, welcome_msg, reply_markup=main_keyboard())
+        welcome_msg = f"🥰 স্বাগতম, {first_name}!\n💎 কাজ শুরু করতে নিচের অপশনগুলো ব্যবহার করুন 🔽"
+        bot.send_message(call.message.chat.id, welcome_msg, reply_markup=main_keyboard(), parse_mode="Markdown")
     else:
         bot.answer_callback_query(call.id, "❌ আপনি এখনো চ্যানেলে জয়েন করেননি! দয়া করে আগে জয়েন করুন।", show_alert=True)
 
@@ -267,7 +267,7 @@ def handle_menu(message):
     text = message.text
     user_data = get_user_data(user_id)
 
-    # সাবস্ক্রিপশন চেক করে নেওয়া
+    # সাধারণ মেসেজেও সাবস্ক্রিপশন চেক করে নেওয়া
     if not check_user_subscription(user_id):
         sub_msg = (
             f"📢 To use this bot you must subscribe to our channel: {CHANNEL_USERNAME}\n\n"
@@ -440,4 +440,4 @@ if __name__ == "__main__":
         pass
         
     bot.infinity_polling(skip_pending=True)
-    
+        
