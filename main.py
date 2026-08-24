@@ -7,7 +7,7 @@ from flask import Flask
 import telebot
 from telebot import types
 
-# ১. Web Server setup
+# ১. Web Server setup (Render-এর জন্য বাধ্যতামূলক)
 app = Flask(__name__)
 
 @app.route('/')
@@ -31,7 +31,7 @@ def is_admin(message):
         return True
     return False
 
-# চ্যানেল কনফিগারেশন (পুরোনো ফোর্স সাবস্ক্রাইব বা A_ToolsX লিংক চিরতরে রিমুভ করা হয়েছে)
+# চ্যানেল কনফিগারেশন
 CHANNEL_URL = "https://t.me/INCOMEXSUPPORT"
 CHANNEL_ID = "-1004324671942"
 ADMIN_SUPPORT_URL = "https://t.me/Xsupportadmin1"
@@ -497,4 +497,5 @@ def handle_menu(message):
         
         bot.send_message(message.chat.id, support_msg, reply_markup=support_markup, parse_mode="Markdown")
 
-    
+    elif text == '🧑‍💼 আমি নতুন':
+       
