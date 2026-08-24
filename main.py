@@ -215,7 +215,6 @@ def add_user_balance(message):
         amount = float(args[2])
         target_user = get_user_data(target_user_id)
         
-        # ইউজারের মূল ব্যালেন্স ও ইনকাম যোগ করা
         target_user['balance'] += amount
         target_user['total_income'] += amount
         target_user['completed_tasks'] += 1  
@@ -228,15 +227,14 @@ def add_user_balance(message):
         except:
             pass
 
-        # --- এখানে ১০% রেফার কমিশন হিসাব করা হচ্ছে ---
+        # ১০% রেফার কমিশন হিসাব
         referrer_id = target_user.get('referred_by')
         if referrer_id:
-            commission = amount * 0.10  # ১০% কমিশন
+            commission = amount * 0.10
             referrer_user = get_user_data(referrer_id)
             referrer_user['balance'] += commission
             referrer_user['refer_income'] += commission
             
-            # রেফারারকে নোটিফিকেশন পাঠানো
             try:
                 ref_msg = (
                     f"🎁 **রেফারেল কমিশন যোগ হয়েছে!**\n\n"
@@ -501,4 +499,7 @@ if __name__ == "__main__":
     bot.remove_webhook()
     if RENDER_EXTERNAL_URL:
         bot.set_webhook(url=f"{RENDER_EXTERNAL_URL.rstrip('/')}/{TOKEN}")
-  
+    
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
+    
