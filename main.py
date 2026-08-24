@@ -127,7 +127,7 @@ def withdraw_methods_keyboard():
     markup.add(
         types.KeyboardButton('USDT (BEP-20) -> সর্বনিম্ন: 0.3(-0.05)'),
         types.KeyboardButton('মোবাইল রিচার্জ -> সর্বনিম্ন: ৩০(-৫)'),
-        types.KeyboardButton('বিকাশ -> সর্বনিম্ন: ৫০ (-৫)'),
+        types.KeyboardButton('বিকাশ -> সর্বনিম্ন: ৫০ (-⁵)'),
         types.KeyboardButton('❌ বাতিল')
     )
     return markup
@@ -419,28 +419,19 @@ def handle_menu(message):
         bot.send_message(message.chat.id, "💰 **টাকা তোলার মাধ্যম সিলেক্ট করুন:**", reply_markup=withdraw_methods_keyboard(), parse_mode="Markdown")
 
     elif text == 'USDT (BEP-20) -> সর্বনিম্ন: 0.3(-0.05)':
-        if user_data['balance'] < 0.3:
-            bot.send_message(message.chat.id, f"❌ উইড্রোর জন্য পর্যাপ্ত ব্যালেন্স নেই।\nআপনার ব্যালেন্স: {user_data['balance']:.2f} BDT", reply_markup=main_keyboard(), parse_mode="Markdown")
-        else:
-            user_data['withdraw_method'] = text
-            user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
-            bot.send_message(message.chat.id, "USDT (BEP-20) অ্যাড্রেসটি দিন", reply_markup=cancel_keyboard(), parse_mode="Markdown")
+        user_data['withdraw_method'] = text
+        user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
+        bot.send_message(message.chat.id, "USDT (BEP-20) অ্যাড্রেসটি দিন", reply_markup=cancel_keyboard(), parse_mode="Markdown")
 
     elif text == 'মোবাইল রিচার্জ -> সর্বনিম্ন: ৩০(-৫)':
-        if user_data['balance'] < 30.0:
-            bot.send_message(message.chat.id, f"❌ উইড্রোর জন্য পর্যাপ্ত ব্যালেন্স নেই।\nআপনার ব্যালেন্স: {user_data['balance']:.2f} BDT", reply_markup=main_keyboard(), parse_mode="Markdown")
-        else:
-            user_data['withdraw_method'] = text
-            user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
-            bot.send_message(message.chat.id, "মোবাইল রিচার্জ নম্বরটি দিন", reply_markup=cancel_keyboard(), parse_mode="Markdown")
+        user_data['withdraw_method'] = text
+        user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
+        bot.send_message(message.chat.id, "মোবাইল রিচার্জ নম্বরটি দিন", reply_markup=cancel_keyboard(), parse_mode="Markdown")
 
-    elif text == 'বিকাশ -> সর্বনিম্ন: ৫০ (-৫)':
-        if user_data['balance'] < 50.0:
-            bot.send_message(message.chat.id, f"❌ উইড্রোর জন্য পর্যাপ্ত ব্যালেন্স নেই।\nআপনার ব্যালেন্স: {user_data['balance']:.2f} BDT", reply_markup=main_keyboard(), parse_mode="Markdown")
-        else:
-            user_data['withdraw_method'] = text
-            user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
-            bot.send_message(message.chat.id, "বিকাশ নম্বরটি দিন", reply_markup=cancel_keyboard(), parse_mode="Markdown")
+    elif text == 'বিকাশ -> সর্বনিম্ন: ৫০ (-⁵)':
+        user_data['withdraw_method'] = text
+        user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
+        bot.send_message(message.chat.id, "বিকাশ নম্বরটি দিন", reply_markup=cancel_keyboard(), parse_mode="Markdown")
 
     elif text == '⏮ ফিরে যান':
         bot.send_message(message.chat.id, "🟣 **সিলেক্ট করুন:**", reply_markup=category_keyboard(), parse_mode="Markdown")
@@ -501,4 +492,13 @@ def handle_menu(message):
         bot.reply_to(message, "🔰 **নিয়ম:** প্রতিদিন কাজ করুন এবং বন্ধুদের রেফার করে আয় বাড়ান।")
 
     elif text == '🤪 কিভাবে কাজ করব':
-        bot.reply_to(message, "অ্যাকাউন্ট তৈরি করে প্রয়োজন
+        bot.reply_to(message, "অ্যাকাউন্ট তৈরি করে প্রয়োজনীয় তথ্য (2FA বা Cookies) জমা দিন।")
+
+# ৩. Execution
+if __name__ == "__main__":
+    flask_thread = threading.Thread(target=run_flask)
+    flask_thread.daemon = True
+    flask_thread.start()
+    
+    bot.infinity_polling(skip_pending=True)
+        
