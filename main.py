@@ -14,8 +14,6 @@ app = Flask(__name__)
 TOKEN = os.environ.get('BOT_TOKEN')
 bot = telebot.TeleBot(TOKEN, threaded=False)
 
-# রেন্ডারের লাইভ ওয়েব সার্ভিস ইউআরএল এখানে স্বয়ংক্রিয়ভাবে কাজ করবে অথবা আপনার রেন্ডার অ্যাপের লিংক দিতে পারেন
-# যেমন: https://your-app-name.onrender.com/
 RENDER_EXTERNAL_URL = os.environ.get('RENDER_EXTERNAL_URL', '')
 
 ADMIN_USERNAMES = ["Trillionaire_9"]
@@ -245,7 +243,17 @@ def send_welcome(message):
             if referrer_id != user_id and referrer_id in users_db:
                 user_data['referred_by'] = referrer_id
                 users_db[referrer_id]['referrals'] += 1
-                bot.send_message(referrer_id, f"🎉 {first_name} আপনার রেফারেলে জয়েন করেছে!", parse_mode="Markdown")
+                
+                # রেফারের ইউজারকে নোটিফিকেশন পাঠানো
+                ref_notify_msg = (
+                    f"🎉 **সফল রেফারেল বোনাস!**\n\n"
+                    f"👤 **{first_name}** আপনার রেফারেলে জয়েন করেছে!\n"
+                    f"💰 তার কাজের 10% কমিশন আপনার ব্যালেন্সে এড হতে থাকবে।"
+                )
+                try:
+                    bot.send_message(referrer_id, ref_notify_msg, parse_mode="Markdown")
+                except:
+                    pass
         except ValueError:
             pass
 
@@ -434,13 +442,23 @@ def handle_menu(message):
         ref_link = f"https://t.me/{bot_username}?start={user_id}"
         total_ref = user_data["referrals"]
         ref_inc = user_data["refer_income"]
+        
         referral_msg = (
             f"🎁 **My Referrals**\n"
             f"👤 **Total Refer:** {total_ref}\n"
             f"💲 **Total Refer Income:** {ref_inc:.2f} BDT\n"
-            f"🔗 **আপনার রেফার লিংক:**\n{ref_link}"
+            f"🔗 **আপনার রেফার লিংক:**\n{ref_link}\n\n"
+            f"💠 আপনি আপনার প্রতিটি রেফারেলের সম্পূর্ণ করা কাজ থেকে আয়ের 10% কমিশন পাবেন।"
         )
-        bot.send_message(message.chat.id, referral_msg, parse_mode="Markdown")
+        
+        # শেয়ার করুন ইনলাইন বাটন যোগ করা
+        share_url = f"https://t.me/share/url?url={ref_link}&text=घर বসে প্রতিদিন আয় করুন ফ্রি তে! এখুনি জয়েন করুন:"
+        referral_markup = types.InlineKeyboardMarkup(row_width=1)
+        referral_markup.add(
+            types.InlineKeyboardButton("🌐 শেয়ার করুন", url=share_url)
+        )
+        
+        bot.send_message(message.chat.id, referral_msg, reply_markup=referral_markup, parse_mode="Markdown")
     elif text == '🧐 সাপোর্ট':
         support_text = (
             "📞 <b>গ্রাহক সেবা কেন্দ্র</b>\n"
@@ -461,11 +479,10 @@ def handle_menu(message):
         bot.reply_to(message, "অ্যাকাউন্ট তৈরি করে প্রয়োজনীয় তথ্য জমা দিন।")
 
 if __name__ == "__main__":
-    # পুরোনো যেকোনো ওয়েবহুক বা পোলিং ক্লিয়ার করে নতুন ওয়েবহুক সেটআপ করা
     bot.remove_webhook()
     if RENDER_EXTERNAL_URL:
         bot.set_webhook(url=f"{RENDER_EXTERNAL_URL.rstrip('/')}/{TOKEN}")
     
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-        
+    
