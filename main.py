@@ -1,4 +1,4 @@
-import os
+Import os
 import io
 import threading
 import random
@@ -22,9 +22,9 @@ def run_flask():
 TOKEN = '8720565653:AAFltxQwffiTi5DmTwQKud-Wh1SkZlyVHm8'
 bot = telebot.TeleBot(TOKEN)
 
-# চ্যানেল কনফিগারেশন (নতুন চ্যানেল আপডেট করা হয়েছে)
-CHANNEL_USERNAME = "@INCOMEXSUPPORT"
-CHANNEL_URL = "https://t.me/INCOMEXSUPPORT"
+# চ্যানেল কনফিগারেশন
+CHANNEL_USERNAME = "@incomex1954"
+CHANNEL_URL = "https://t.me/incomex1954"
 CHANNEL_ID = "-1004324671942"
 ADMIN_SUPPORT_URL = "https://t.me/Xsupportadmin1"
 
@@ -295,6 +295,7 @@ def handle_menu(message):
     user_id = message.from_user.id
     text = message.text
     
+    # মেনু বাটনে ক্লিক করলে বা সাবস্ক্রিপশন চেক
     if text in ['📖 কাজ ▸', '💵 ব্যালেন্স', 'টাকা উত্তোলন', 'My Referrals', '🧐 সাপোর্ট', '🧑‍💼 আমি নতুন', '📷 ইনস্টাগ্রাম কাজ >', '📧 Gmail কাজ', '📘 Facebook কাজ', '📷 ইনস্টাগ্রাম 2fa (৳2.70)', '🔑 2FA Set', '🍪 Cookies দিন', 'USDT (BEP-20) -> সর্বনিম্ন: 0.3(-0.05)', 'মোবাইল রিচার্জ -> সর্বনিম্ন: ৩০(-৫)', 'বিকাশ -> সর্বনিম্ন: ৫০ (-৫)', '⏮ ফিরে যান', '🤪 কিভাবে কাজ করব']:
         if not check_user_subscription(user_id):
             sub_text = f"📢 To use this bot you must subscribe to our channel: {CHANNEL_USERNAME}\n\n👇 Use the buttons below."
@@ -308,6 +309,7 @@ def handle_menu(message):
         bot.send_message(message.chat.id, "❌ **বাতিল করা হয়েছে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
         return
 
+    # স্টেট অনুযায়ী কাজের ডেটা রিসিভ করা
     current_state = user_data.get('state')
     
     if current_state in ['WAITING_FOR_2FA', 'WAITING_FOR_FB_COOKIES']:
@@ -442,7 +444,7 @@ def handle_menu(message):
             f"✅ **সম্পন্ন কাজ:** {comp_tasks} টি\n"
             f"⏳ **রিভিউতে আছে:** {pend_tasks} টি"
         )
-        bot.reply_to(message, balance_msg, parse_mode="Markdown")
+        bot.reply_to(message, balance_balance_msg := balance_msg, parse_mode="Markdown")
 
     elif text == 'My Referrals':
         bot_username = bot.get_me().username
@@ -489,4 +491,3 @@ if __name__ == "__main__":
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
     bot.infinity_polling()
-        
