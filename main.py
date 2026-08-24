@@ -22,10 +22,10 @@ def run_flask():
 TOKEN = '8720565653:AAFltxQwffiTi5DmTwQKud-Wh1SkZlyVHm8'
 bot = telebot.TeleBot(TOKEN)
 
-# আপনার নতুন চ্যানেলের তথ্য
+# চ্যানেল কনফিগারেশন
 CHANNEL_USERNAME = "@incomex1954"
 CHANNEL_URL = "https://t.me/incomex1954"
-CHANNEL_ID = "-1004324671942" # সব কাজের এবং উইথড্রর নোটিফিকেশন যাওয়ার চ্যানেল আইডি
+CHANNEL_ID = "-1004324671942"
 ADMIN_SUPPORT_URL = "https://t.me/Xsupportadmin1"
 
 users_db = {}
@@ -49,7 +49,6 @@ def get_user_data(user_id):
         }
     return users_db[user_id]
 
-# ইউজার চ্যানেলে জয়েন আছে কি না তা চেক করার ফাংশন
 def check_user_subscription(user_id):
     try:
         member = bot.get_chat_member(CHANNEL_USERNAME, user_id)
@@ -75,8 +74,8 @@ def main_keyboard():
     markup.add(
         types.KeyboardButton('📖 কাজ ▸'),
         types.KeyboardButton('💵 ব্যালেন্স'),
-        types.KeyboardButton('উইথড্র'),
-        types.KeyboardButton('মাই রেফারেল'),
+        types.KeyboardButton('টাকা উত্তোলন'),
+        types.KeyboardButton('My Referrals'),
         types.KeyboardButton('🧐 সাপোর্ট'),
         types.KeyboardButton('🧑‍💼 আমি নতুন')
     )
@@ -133,7 +132,6 @@ def withdraw_methods_keyboard():
     )
     return markup
 
-# সাবস্ক্রাইব করার ইনলাইন কিবোর্ড
 def sub_inline_keyboard():
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton("📢 Subscribe to channel", url=CHANNEL_URL))
@@ -189,10 +187,9 @@ def add_user_balance(message):
         if target_user['pending_tasks'] > 0:
             target_user['pending_tasks'] -= 1
         
-        # --- রেফারের ১০% কমিশন হিসাব ও অ্যাড করার লজিক ---
         referrer_id = target_user.get('referred_by')
         if referrer_id and referrer_id in users_db:
-            commission = amount * 0.10  # ১০% কমিশন
+            commission = amount * 0.10
             ref_user = users_db[referrer_id]
             ref_user['balance'] += commission
             ref_user['refer_income'] += commission
@@ -205,7 +202,6 @@ def add_user_balance(message):
                 bot.send_message(referrer_id, ref_notification, parse_mode="Markdown")
             except Exception as e:
                 print(f"Referrer Notification Error: {e}")
-        # -----------------------------------------------
 
         bot.reply_to(message, f"✅ সফলভাবে User ID: `{target_user_id}` এর ব্যালেন্সে `{amount} BDT` যোগ করা হয়েছে।", parse_mode="Markdown")
         
@@ -245,7 +241,6 @@ def send_welcome(message):
     first_name = message.from_user.first_name
     user_data = get_user_data(user_id)
     
-    # রেফারেল চেক (যদি নতুন ইউজার অন্য কারো লিংকে জয়েন করে)
     args = message.text.split()
     if len(args) > 1 and user_data['referred_by'] is None:
         try:
@@ -254,7 +249,6 @@ def send_welcome(message):
                 user_data['referred_by'] = referrer_id
                 users_db[referrer_id]['referrals'] += 1
                 
-                # রেফারারকে নোটিফিকেশন পাঠানো
                 ref_notify_msg = (
                     f"🎉 সফল রেফারেল বোনাস!\n\n"
                     f"👤 {first_name} আপনার রেফারেলে জয়েন করেছে!\n"
@@ -264,7 +258,6 @@ def send_welcome(message):
         except ValueError:
             pass
 
-    # ইউজার চ্যানেলে জয়েন আছে কি না চেক করা
     if not check_user_subscription(user_id):
         text = f"📢 To use this bot you must subscribe to our channel: {CHANNEL_USERNAME}\n\n👇 Use the buttons below."
         bot.send_message(message.chat.id, text, reply_markup=sub_inline_keyboard(), parse_mode="Markdown")
@@ -300,22 +293,26 @@ def verify_subscription(call):
 @bot.message_handler(func=lambda message: True)
 def handle_menu(message):
     user_id = message.from_user.id
+    text = message.text
     
-    if not check_user_subscription(user_id):
-        text = f"📢 To use this bot you must subscribe to our channel: {CHANNEL_USERNAME}\n\n👇 Use the buttons below."
-        bot.send_message(message.chat.id, text, reply_markup=sub_inline_keyboard(), parse_mode="Markdown")
-        return
+    # মেনু বাটনে ক্লিক করলে বা সাবস্ক্রিপশন চেক
+    if text in ['📖 কাজ ▸', '💵 ব্যালেন্স', 'টাকা উত্তোলন', 'My Referrals', '🧐 সাপোর্ট', '🧑‍💼 আমি নতুন', '📷 ইনস্টাগ্রাম কাজ >', '📧 Gmail কাজ', '📘 Facebook কাজ', '📷 ইনস্টাগ্রাম 2fa (৳2.70)', '🔑 2FA Set', '🍪 Cookies দিন', 'USDT (BEP-20) -> সর্বনিম্ন: 0.3(-0.05)', 'মোবাইল রিচার্জ -> সর্বনিম্ন: ৩০(-৫)', 'বিকাশ -> সর্বনিম্ন: ৫০ (-৫)', '⏮ ফিরে যান', '🤪 কিভাবে কাজ করব']:
+        if not check_user_subscription(user_id):
+            sub_text = f"📢 To use this bot you must subscribe to our channel: {CHANNEL_USERNAME}\n\n👇 Use the buttons below."
+            bot.send_message(message.chat.id, sub_text, reply_markup=sub_inline_keyboard(), parse_mode="Markdown")
+            return
 
     user_data = get_user_data(user_id)
-    text = message.text
 
     if text == '❌ বাতিল':
         user_data['state'] = None
         bot.send_message(message.chat.id, "❌ **বাতিল করা হয়েছে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
         return
 
-    if user_data.get('state') in ['WAITING_FOR_2FA', 'WAITING_FOR_FB_COOKIES']:
-        current_state = user_data.get('state')
+    # স্টেট অনুযায়ী কাজের ডেটা রিসিভ করা
+    current_state = user_data.get('state')
+    
+    if current_state in ['WAITING_FOR_2FA', 'WAITING_FOR_FB_COOKIES']:
         user_data['state'] = None
         
         acc_name = user_data.get('generated_username', 'Account User')
@@ -333,6 +330,7 @@ def handle_menu(message):
         })
         
         data_label = "Submitted Data (Cookies)" if current_state == 'WAITING_FOR_FB_COOKIES' else "Submitted Data (2FA)"
+        
         channel_msg = (
             f"📥 **নতুন কাজ জমা পড়েছে!**\n\n"
             f"👤 **User ID:** `{user_id}`\n"
@@ -351,12 +349,12 @@ def handle_menu(message):
         bot.send_message(message.chat.id, success_reply, reply_markup=main_keyboard(), parse_mode="Markdown")
         return
 
-    elif user_data.get('state') == 'WAITING_FOR_WITHDRAW_NUMBER':
+    elif current_state == 'WAITING_FOR_WITHDRAW_NUMBER':
         method = user_data.get('withdraw_method', 'N/A')
         amount = user_data['balance']
         user_data['state'] = None
         
-        notify_msg = (
+        channel_withdraw_msg = (
             f"💰 **নতুন উইথড্রয়াল রিকোয়েস্ট!**\n\n"
             f"👤 **ইউজার:** {message.from_user.first_name}\n"
             f"🆔 **আইডি:** `{user_id}`\n"
@@ -366,9 +364,9 @@ def handle_menu(message):
         )
         
         try:
-            bot.send_message(CHANNEL_ID, notify_msg, parse_mode="Markdown")
+            bot.send_message(CHANNEL_ID, channel_withdraw_msg, parse_mode="Markdown")
         except Exception as e:
-            print(f"Channel Notification Error: {e}")
+            print(f"Channel Withdraw Log Error: {e}")
 
         bot.send_message(message.chat.id, f"✅ **আপনার উইথড্রয়াল রিকোয়েস্ট সফলভাবে জমা হয়েছে!**", reply_markup=main_keyboard(), parse_mode="Markdown")
         return
@@ -418,13 +416,12 @@ def handle_menu(message):
         user_data['state'] = 'WAITING_FOR_FB_COOKIES'
         bot.send_message(message.chat.id, "🍪 **আপনার ফেসবুক অ্যাকাউন্টের কুকিজটি দিন:** 🎯", reply_markup=cancel_keyboard(), parse_mode="Markdown")
 
-    elif text == 'উইথড্র':
+    elif text == 'টাকা উত্তোলন':
         user_data['state'] = 'SELECT_WITHDRAW_METHOD'
         bot.send_message(message.chat.id, "💰 **টাকা তোলার মাধ্যম সিলেক্ট করুন:**", reply_markup=withdraw_methods_keyboard(), parse_mode="Markdown")
 
     elif text in ['USDT (BEP-20) -> সর্বনিম্ন: 0.3(-0.05)', 'মোবাইল রিচার্জ -> সর্বনিম্ন: ৩০(-৫)', 'বিকাশ -> সর্বনিম্ন: ৫০ (-৫)']:
         user_data['withdraw_method'] = text
-        user_data['state'] = 'WAITING_FOR_WAITING_FOR_WITHDRAW_NUMBER' # safe reference
         user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
         bot.send_message(message.chat.id, f"📱 **আপনার {text} অ্যাকাউন্ট/নম্বরটি লিখে পাঠান:**", reply_markup=cancel_keyboard(), parse_mode="Markdown")
 
@@ -447,9 +444,9 @@ def handle_menu(message):
             f"✅ **সম্পন্ন কাজ:** {comp_tasks} টি\n"
             f"⏳ **রিভিউতে আছে:** {pend_tasks} টি"
         )
-        bot.reply_to(message, balance_msg, parse_mode="Markdown")
+        bot.reply_to(message, balance_balance_msg := balance_msg, parse_mode="Markdown")
 
-    elif text == 'মাই রেফারেল':
+    elif text == 'My Referrals':
         bot_username = bot.get_me().username
         ref_link = f"https://t.me/{bot_username}?start={user_id}"
         total_ref = user_data["referrals"]
