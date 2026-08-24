@@ -38,6 +38,8 @@ def get_user_data(user_id):
             "completed_tasks": 0,
             "pending_tasks": 0,
             "referrals": 0, 
+            "refer_income": 0.0,
+            "referred_by": None,
             "state": None, 
             "withdraw_method": None, 
             "generated_username": None,
@@ -216,14 +218,33 @@ def send_custom_message_to_user(message):
     except Exception as e:
         bot.reply_to(message, f"❌ মেসেজ পাঠানো সম্ভব হয়নি। কারণ: {e}")
 
-# --- স্টার্ট কমান্ড ও সাবস্ক্রিপশন চেক ---
+# --- স্টার্ট কমান্ড ও রেফারেল হ্যান্ডলিং ---
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user_id = message.from_user.id
     first_name = message.from_user.first_name
-    get_user_data(user_id)
+    user_data = get_user_data(user_id)
     
+    # রেফারেল চেক (যদি নতুন ইউজার অন্য কারো লিংকে জয়েন করে)
+    args = message.text.split()
+    if len(args) > 1 and user_data['referred_by'] is None:
+        try:
+            referrer_id = int(args[1])
+            if referrer_id != user_id and referrer_id in users_db:
+                user_data['referred_by'] = referrer_id
+                users_db[referrer_id]['referrals'] += 1
+                
+                # রেফারারকে নোটিফিকেশন পাঠানো
+                ref_notify_msg = (
+                    f"🎉 সফল রেফারেল বোনাস!\n\n"
+                    f"👤 {first_name} আপনার রেফারেলে জয়েন করেছে!\n"
+                    f"💰 তার কাজের 10% কমিশন আপনার ব্যালেন্সে এড হতে থাকবে।"
+                )
+                bot.send_message(referrer_id, ref_notify_msg, parse_mode="Markdown")
+        except ValueError:
+            pass
+
     # ইউজার চ্যানেলে জয়েন আছে কি না চেক করা
     if not check_user_subscription(user_id):
         text = f"📢 To use this bot you must subscribe to our channel: {CHANNEL_USERNAME}\n\n👇 Use the buttons below."
@@ -235,7 +256,6 @@ def send_welcome(message):
         )
         bot.send_message(message.chat.id, welcome_msg, reply_markup=main_keyboard(), parse_mode="Markdown")
 
-# ইনলাইন বাটনের 'Check subscription' ক্লিক হ্যান্ডেল করার জন্য
 @bot.callback_query_handler(func=lambda call: call.data == "check_sub")
 def verify_subscription(call):
     user_id = call.from_user.id
@@ -412,7 +432,23 @@ def handle_menu(message):
     elif text == 'মাই রেফারেল':
         bot_username = bot.get_me().username
         ref_link = f"https://t.me/{bot_username}?start={user_id}"
-        bot.reply_to(message, f"🔗 **আপনার রেফারাল লিংক:**\n{ref_link}\n\nপ্রতি সফল রেফারে পাবেন ১০ টাকা!", parse_mode="Markdown")
+        total_ref = user_data["referrals"]
+        ref_inc = user_data["refer_income"]
+        
+        referral_msg = (
+            f"🎁 **My Referrals**\n"
+            f"👤 **Total Refer:** {total_ref}\n"
+            f"💲 **Total Refer Income:** {ref_inc:.2f} BDT\n"
+            f"🔗 **আপনার রেফার লিংক:**\n{ref_link}\n\n"
+            f"ℹ️ **আপনি আপনার প্রতিটি রেফারেলের সম্পূর্ণ করা কাজ থেকে আয়ের 10% কমিশন পাবেন।**"
+        )
+        
+        # স্ক্রিনশটের মতো 'শেয়ার করুন' ইনলাইন বাটন যোগ করা
+        share_markup = types.InlineKeyboardMarkup()
+        share_url = f"https://t.me/share/url?url={ref_link}&text=घर বসে অনলাইন থেকে প্রতিদিন ইনকাম করুন! এখনই বোটটিতে জয়েন করুন:"
+        share_markup.add(types.InlineKeyboardButton("🔄 শেয়ার করুন", url=share_url))
+        
+        bot.send_message(message.chat.id, referral_msg, reply_markup=share_markup, parse_mode="Markdown")
 
     elif text == '🧐 সাপোর্ট':
         bot.reply_to(message, "সাহায্যের জন্য অ্যাডমিন ইউজারনেমে যোগাযোগ করুন।")
@@ -428,4 +464,4 @@ if __name__ == "__main__":
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
     bot.infinity_polling()
-        
+    
