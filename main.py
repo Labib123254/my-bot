@@ -109,6 +109,14 @@ def category_keyboard():
     )
     return markup
 
+def fb_sub_keyboard():
+    markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+    markup.add(
+        types.KeyboardButton('0 fnd cookies | 4.00 ৳'),
+        types.KeyboardButton('⏮ ফিরে যান')
+    )
+    return markup
+
 def instagram_sub_keyboard():
     markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
     markup.add(
@@ -129,7 +137,7 @@ def task_action_keyboard():
 def fb_task_action_keyboard():
     markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
     markup.add(
-        types.KeyboardButton('🍪 Cookies দিন'),
+        types.KeyboardButton('🍪 কুকিজ দিন'),
         types.KeyboardButton('🤪 কিভাবে কাজ করব'),
         types.KeyboardButton('⏮ ফিরে যান')
     )
@@ -358,12 +366,21 @@ def handle_menu(message):
     elif text == '📷 ইনস্টাগ্রাম কাজ >':
         bot.send_message(message.chat.id, "🟣 **সিলেক্ট করুন:**", reply_markup=instagram_sub_keyboard(), parse_mode="Markdown")
     elif text == '📘 Facebook কাজ':
-        username = generate_random_username()
+        bot.send_message(message.chat.id, "🟣 **সিলেক্ট করুন:**", reply_markup=fb_sub_keyboard(), parse_mode="Markdown")
+    elif text == '0 fnd cookies | 4.00 ৳':
+        first_name = generate_random_username().split('_')[0]
+        last_name = generate_random_username().split('_')[0]
         password = generate_random_password()
-        user_data['generated_username'] = username
+        user_data['generated_username'] = f"{first_name} {last_name}"
         user_data['generated_password'] = password
-        user_data['task_type'] = "📘 Facebook কাজ"
-        msg_text = f"👤 **Name:** {username}\n🔐 **Pass:** `{password}`\n\n📘 **ফেসবুক অ্যাকাউন্ট খুলে Cookies দিন বাটনে চাপ দিন 🤪**"
+        user_data['task_type'] = "📘 Facebook কাজ (4.00 ৳)"
+        
+        msg_text = (
+            f"👤 **First name:** {first_name}\n"
+            f"👤 **Last name:** {last_name}\n"
+            f"🔐 **Password:** {password}\n\n"
+            f"📘 উপরের তথ্য দিয়ে অ্যাকাউন্ট খুলে নিচে **কুকিজ দিন** বাটনে চাপ দিন 🤪"
+        )
         bot.send_message(message.chat.id, msg_text, reply_markup=fb_task_action_keyboard(), parse_mode="Markdown")
     elif text == '📷 ইনস্টাগ্রাম 2fa (৳2.70)':
         username = generate_random_username()
@@ -376,9 +393,9 @@ def handle_menu(message):
     elif text == '🔑 2FA Set':
         user_data['state'] = 'WAITING_FOR_2FA'
         bot.send_message(message.chat.id, "📢 **2FA Key টি দিন:** 🎯", reply_markup=cancel_keyboard(), parse_mode="Markdown")
-    elif text == '🍪 Cookies দিন':
+    elif text == '🍪 কুকিজ দিন':
         user_data['state'] = 'WAITING_FOR_FB_COOKIES'
-        bot.send_message(message.chat.id, "🍪 **আপনার কুকিজটি দিন:** 🎯", reply_markup=cancel_keyboard(), parse_mode="Markdown")
+        bot.send_message(message.chat.id, "📝 **আপনার ফেসবুক অ্যাকাউন্টের কুকিজটি দিন:** 🎯", reply_markup=cancel_keyboard(), parse_mode="Markdown")
     elif text == 'টাকা উত্তোলন':
         user_data['state'] = 'SELECT_WITHDRAW_METHOD'
         bot.send_message(message.chat.id, "💰 **মাধ্যম সিলেক্ট করুন:**", reply_markup=withdraw_methods_keyboard(), parse_mode="Markdown")
