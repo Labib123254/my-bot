@@ -188,6 +188,24 @@ def add_user_balance(message):
         if target_user['pending_tasks'] > 0:
             target_user['pending_tasks'] -= 1
         
+        # --- রেফারের ১০% কমিশন হিসাব ও অ্যাড করার লজিক ---
+        referrer_id = target_user.get('referred_by')
+        if referrer_id and referrer_id in users_db:
+            commission = amount * 0.10  # ১০% কমিশন
+            ref_user = users_db[referrer_id]
+            ref_user['balance'] += commission
+            ref_user['refer_income'] += commission
+            
+            try:
+                ref_notification = (
+                    f"💰 **রেফারেল কমিশন যুক্ত হয়েছে!**\n"
+                    f"আপনার রেফারেলে থাকা ইউজারের কাজ এপ্রুভ হওয়ার কারণে আপনি পেয়েছেন: `{commission:.2f} BDT` কমিশন।"
+                )
+                bot.send_message(referrer_id, ref_notification, parse_mode="Markdown")
+            except Exception as e:
+                print(f"Referrer Notification Error: {e}")
+        # -----------------------------------------------
+
         bot.reply_to(message, f"✅ সফলভাবে User ID: `{target_user_id}` এর ব্যালেন্সে `{amount} BDT` যোগ করা হয়েছে।", parse_mode="Markdown")
         
         try:
@@ -443,7 +461,6 @@ def handle_menu(message):
             f"ℹ️ **আপনি আপনার প্রতিটি রেফারেলের সম্পূর্ণ করা কাজ থেকে আয়ের 10% কমিশন পাবেন।**"
         )
         
-        # স্ক্রিনশটের মতো 'শেয়ার করুন' ইনলাইন বাটন যোগ করা
         share_markup = types.InlineKeyboardMarkup()
         share_url = f"https://t.me/share/url?url={ref_link}&text=घर বসে অনলাইন থেকে প্রতিদিন ইনকাম করুন! এখনই বোটটিতে জয়েন করুন:"
         share_markup.add(types.InlineKeyboardButton("🔄 শেয়ার করুন", url=share_url))
@@ -464,4 +481,4 @@ if __name__ == "__main__":
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
     bot.infinity_polling()
-    
+        
