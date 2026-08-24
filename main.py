@@ -22,10 +22,11 @@ def run_flask():
 TOKEN = '8720565653:AAFltxQwffiTi5DmTwQKud-Wh1SkZlyVHm8'
 bot = telebot.TeleBot(TOKEN)
 
-# আপনার চ্যানেল আইডি বা ইউজারনেম
+# আপনার চ্যানেল আইডি ও এডমিন ইউজারনেম
 CHANNEL_USERNAME = "@INCOMEXSUPPORT"
 CHANNEL_URL = "https://t.me/INCOMEXSUPPORT"
 CHANNEL_ID = "@hi54854" # কাজের নোটিফিকেশন পাঠানোর চ্যানেল
+ADMIN_SUPPORT_URL = "https://t.me/Xsupportadmin1"
 
 users_db = {}
 tasks_list = []
@@ -468,7 +469,21 @@ def handle_menu(message):
         bot.send_message(message.chat.id, referral_msg, reply_markup=share_markup, parse_mode="Markdown")
 
     elif text == '🧐 সাপোর্ট':
-        bot.reply_to(message, "সাহায্যের জন্য অ্যাডমিন ইউজারনেমে যোগাযোগ করুন।")
+        support_msg = (
+            f"🧐 **গ্রাহক সেবা কেন্দ্র**\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            f"সম্মানিত মেম্বার,\n"
+            f"আপনার যেকোনো সমস্যা বা জিজ্ঞাসার জন্য আমাদের সাপোর্ট টিমের সাথে যোগাযোগ করুন। আমরা দ্রুত সমাধানের চেষ্টা করব।\n\n"
+            f"⚠️ **নোট:** অযথা মেসেজ দেওয়া থেকে বিরত থাকুন। ধন্যবাদ!"
+        )
+        
+        support_markup = types.InlineKeyboardMarkup(row_width=1)
+        support_markup.add(
+            types.InlineKeyboardButton("🛠️ এডমিন সাপোর্ট", url=ADMIN_SUPPORT_URL),
+            types.InlineKeyboardButton("🚀 অফিসিয়াল চ্যানেল", url=CHANNEL_URL)
+        )
+        
+        bot.send_message(message.chat.id, support_msg, reply_markup=support_markup, parse_mode="Markdown")
 
     elif text == '🧑‍💼 আমি নতুন':
         bot.reply_to(message, "🔰 **নিয়ম:** প্রতিদিন কাজ করুন এবং বন্ধুদের রেফার করে আয় বাড়ান।")
