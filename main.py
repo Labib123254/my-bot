@@ -365,7 +365,7 @@ def handle_menu(message):
                 
             # ২. USDT অ্যাড্রেস অন্তত ৩০ ক্যারেক্টার হতে হবে, কম হলে ভুল দেখাবে
             if len(text.strip()) < 30:
-                bot.send_message(message.chat.id, "❌ **উইথড্র এড্রেসটি ভুল!**", reply_markup=cancel_keyboard())
+                bot.send_message(message.chat.id, "❌ **সঠিক USDT (BEP-20) অ্যাড্রেস দিন (কমপক্ষে ৩০ অক্ষর):**", reply_markup=cancel_keyboard())
                 return
                 
         elif 'বিকাশ' in method:
@@ -485,5 +485,4 @@ def handle_menu(message):
         balance_msg = (
             f"💵 **আপনার ব্যালেন্স**\n"
             f"━━━━━━━━━━━━━━━━━━━\n"
-            f"💸 **ব্যালেন্স:** {bal:.2f} BDT\n"
-         
+            f"💸 **ব্যালেন
