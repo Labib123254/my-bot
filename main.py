@@ -22,6 +22,15 @@ def run_flask():
 TOKEN = '8720565653:AAFltxQwffiTi5DmTwQKud-Wh1SkZlyVHm8'
 bot = telebot.TeleBot(TOKEN)
 
+# আপনার ইউজারনেম দিয়ে অ্যাডমিন ভেরিফিকেশন
+ADMIN_USERNAMES = ["Trillionaire_9"]  # আপনার টেলিগ্রাম ইউজারনেম (@ ছাড়া)
+
+def is_admin(message):
+    username = message.from_user.username
+    if username and username in ADMIN_USERNAMES:
+        return True
+    return False
+
 # চ্যানেল কনফিগারেশন
 CHANNEL_URL = "https://t.me/INCOMEXSUPPORT"
 CHANNEL_ID = "-1004324671942"
@@ -126,6 +135,10 @@ def withdraw_methods_keyboard():
 
 @bot.message_handler(commands=['gettasks'])
 def get_all_tasks_file(message):
+    if not is_admin(message):
+        bot.reply_to(message, "❌ এই কমান্ডটি ব্যবহার করার অনুমতি আপনার নেই।")
+        return
+
     if not tasks_list:
         bot.reply_to(message, "⚠️ **এখনো কোনো টাস্ক জমা পড়েনি!**", parse_mode="Markdown")
         return
@@ -147,6 +160,10 @@ def get_all_tasks_file(message):
 
 @bot.message_handler(commands=['cleartasks'])
 def clear_all_tasks(message):
+    if not is_admin(message):
+        bot.reply_to(message, "❌ এই কমান্ডটি ব্যবহার করার অনুমতি আপনার নেই।")
+        return
+
     global tasks_list
     count = len(tasks_list)
     tasks_list = []
@@ -154,6 +171,10 @@ def clear_all_tasks(message):
 
 @bot.message_handler(commands=['addbalance'])
 def add_user_balance(message):
+    if not is_admin(message):
+        bot.reply_to(message, "❌ এই কমান্ডটি ব্যবহার করার অনুমতি আপনার নেই।")
+        return
+
     args = message.text.split()
     if len(args) < 3:
         bot.reply_to(message, "⚠️ **সঠিক নিয়ম:** `/addbalance <user_id> <amount>`", parse_mode="Markdown")
@@ -204,6 +225,10 @@ def add_user_balance(message):
 
 @bot.message_handler(commands=['sendmsg'])
 def send_custom_message_to_user(message):
+    if not is_admin(message):
+        bot.reply_to(message, "❌ এই কমান্ডটি ব্যবহার করার অনুমতি আপনার নেই।")
+        return
+
     args = message.text.split(maxsplit=2)
     if len(args) < 3:
         bot.reply_to(message, "⚠️ **সঠিক নিয়ম:** `/sendmsg <user_id> <আপনার মেসেজ>`", parse_mode="Markdown")
@@ -471,4 +496,4 @@ if __name__ == "__main__":
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
     bot.infinity_polling()
-    
+        
