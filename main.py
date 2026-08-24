@@ -214,6 +214,8 @@ def add_user_balance(message):
         target_user_id = int(args[1])
         amount = float(args[2])
         target_user = get_user_data(target_user_id)
+        
+        # ইউজারের মূল ব্যালেন্স ও ইনকাম যোগ করা
         target_user['balance'] += amount
         target_user['total_income'] += amount
         target_user['completed_tasks'] += 1  
@@ -225,6 +227,25 @@ def add_user_balance(message):
             bot.send_message(target_user_id, f"✅ **টাস্ক এপ্রুভ হয়েছে!**\n💰 **যুক্ত হয়েছে: {amount:.2f} BDT**", parse_mode="Markdown")
         except:
             pass
+
+        # --- এখানে ১০% রেফার কমিশন হিসাব করা হচ্ছে ---
+        referrer_id = target_user.get('referred_by')
+        if referrer_id:
+            commission = amount * 0.10  # ১০% কমিশন
+            referrer_user = get_user_data(referrer_id)
+            referrer_user['balance'] += commission
+            referrer_user['refer_income'] += commission
+            
+            # রেফারারকে নোটিফিকেশন পাঠানো
+            try:
+                ref_msg = (
+                    f"🎁 **রেফারেল কমিশন যোগ হয়েছে!**\n\n"
+                    f"💰 আপনার এক রেফারেলের টাস্ক থেকে আপনি পেয়েছেন: **{commission:.2f} BDT** (১০% কমিশন)"
+                )
+                bot.send_message(referrer_id, ref_msg, parse_mode="Markdown")
+            except:
+                pass
+
     except ValueError:
         bot.reply_to(message, "⚠️ সঠিক সংখ্যা দিন।")
 
@@ -244,7 +265,6 @@ def send_welcome(message):
                 user_data['referred_by'] = referrer_id
                 users_db[referrer_id]['referrals'] += 1
                 
-                # রেফারের ইউজারকে নোটিফিকেশন পাঠানো
                 ref_notify_msg = (
                     f"🎉 **সফল রেফারেল বোনাস!**\n\n"
                     f"👤 **{first_name}** আপনার রেফারেলে জয়েন করেছে!\n"
@@ -451,7 +471,6 @@ def handle_menu(message):
             f"💠 আপনি আপনার প্রতিটি রেফারেলের সম্পূর্ণ করা কাজ থেকে আয়ের 10% কমিশন পাবেন।"
         )
         
-        # শেয়ার করুন ইনলাইন বাটন যোগ করা
         share_url = f"https://t.me/share/url?url={ref_link}&text=घर বসে প্রতিদিন আয় করুন ফ্রি তে! এখুনি জয়েন করুন:"
         referral_markup = types.InlineKeyboardMarkup(row_width=1)
         referral_markup.add(
@@ -483,6 +502,4 @@ if __name__ == "__main__":
     if RENDER_EXTERNAL_URL:
         bot.set_webhook(url=f"{RENDER_EXTERNAL_URL.rstrip('/')}/{TOKEN}")
     
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
-    
+    port = int(os.environ.g
