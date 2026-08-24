@@ -231,7 +231,7 @@ def send_welcome(message):
         except ValueError:
             pass
 
-    # ফোর্চ সাবস্ক্রিপশন চেক (চ্যানেলে জয়েন না থাকলে স্ক্রিনশটের মতো মেসেজ দেখাবে)
+    # ফোর্চ সাবস্ক্রিপশন চেক
     if not check_user_subscription(user_id):
         sub_msg = (
             f"📢 To use this bot you must subscribe to our channel: {CHANNEL_USERNAME}\n\n"
@@ -240,7 +240,6 @@ def send_welcome(message):
         bot.send_message(message.chat.id, sub_msg, reply_markup=subscription_markup())
         return
 
-    # চ্যানেলে জয়েন করা থাকলে সরাসরি স্বাগতম মেসেজ ও মেনু দেখাবে
     welcome_msg = f"🥰 স্বাগতম, {first_name}!\n💎 কাজ শুরু করতে নিচের অপশনগুলো ব্যবহার করুন 🔽"
     bot.send_message(message.chat.id, welcome_msg, reply_markup=main_keyboard(), parse_mode="Markdown")
 
@@ -267,7 +266,6 @@ def handle_menu(message):
     text = message.text
     user_data = get_user_data(user_id)
 
-    # সাধারণ মেসেজেও সাবস্ক্রিপশন চেক করে নেওয়া
     if not check_user_subscription(user_id):
         sub_msg = (
             f"📢 To use this bot you must subscribe to our channel: {CHANNEL_USERNAME}\n\n"
@@ -440,4 +438,4 @@ if __name__ == "__main__":
         pass
         
     bot.infinity_polling(skip_pending=True)
-        
+    
