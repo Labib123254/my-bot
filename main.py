@@ -151,7 +151,7 @@ def withdraw_methods_keyboard():
     )
     return markup
 
-# --- ফ্লাস্ক রুট এবং ওয়েব হুক কনফিগারেশন ---
+# --- ফ্লাস্ক রুট এবং ওয়েব হুক কনফিগারেশন ---
 
 @app.route('/')
 def home():
@@ -176,7 +176,7 @@ def get_all_tasks_file(message):
         return
 
     if not tasks_list:
-        bot.reply_to(message, "⚠️ কোনো টাস্ক জমা পড়েনি।")
+        bot.reply_to(message, "⚠️ কোনো টাস্ক জমা পড়েনি।")
         return
     
     file_content = "=== ALL SUBMITTED TASKS ===\n\n"
@@ -200,7 +200,7 @@ def clear_all_tasks(message):
         return
     global tasks_list
     tasks_list = []
-    bot.reply_to(message, "🗑 সমস্ত টাস্ক মুছে ফেলা হয়েছে।")
+    bot.reply_to(message, "🗑 সমস্ত টাস্ক মুছে ফেলা হয়েছে।")
 
 @bot.message_handler(commands=['addbalance'])
 def add_user_balance(message):
@@ -208,7 +208,7 @@ def add_user_balance(message):
         return
     args = message.text.split()
     if len(args) < 3:
-        bot.reply_to(message, "⚠️ নিয়ম: `/addbalance <user_id> <amount>`", parse_mode="Markdown")
+        bot.reply_to(message, "⚠️ নিয়ম: `/addbalance <user_id> <amount>`", parse_mode="Markdown")
         return
     try:
         target_user_id = int(args[1])
@@ -222,9 +222,9 @@ def add_user_balance(message):
         if target_user['pending_tasks'] > 0:
             target_user['pending_tasks'] -= 1
         
-        bot.reply_to(message, f"✅ User ID: `{target_user_id}` এ {amount} BDT যোগ করা হয়েছে।", parse_mode="Markdown")
+        bot.reply_to(message, f"✅ User ID: `{target_user_id}` এ {amount} BDT যোগ করা হয়েছে।", parse_mode="Markdown")
         try:
-            bot.send_message(target_user_id, f"✅ **টাস্ক এপ্রুভ হয়েছে!**\n💰 **যুক্ত হয়েছে: {amount:.2f} BDT**", parse_mode="Markdown")
+            bot.send_message(target_user_id, f"✅ **টাস্ক এপ্রুভ হয়েছে!**\n💰 **যুক্ত হয়েছে: {amount:.2f} BDT**", parse_mode="Markdown")
         except:
             pass
 
@@ -239,8 +239,8 @@ def add_user_balance(message):
             # রেফারারকে নোটিফিকেশন পাঠানো
             try:
                 ref_msg = (
-                    f"🎁 **রেফারেল কমিশন যোগ হয়েছে!**\n\n"
-                    f"💰 আপনার এক রেফারেলের টাস্ক থেকে আপনি পেয়েছেন: **{commission:.2f} BDT** (১০% কমিশন)"
+                    f"🎁 **রেফারেল কমিশন যোগ হয়েছে!**\n\n"
+                    f"💰 আপনার এক রেফারেলের টাস্ক থেকে আপনি পেয়েছেন: **{commission:.2f} BDT** (১০% কমিশন)"
                 )
                 bot.send_message(referrer_id, ref_msg, parse_mode="Markdown")
             except:
@@ -267,7 +267,7 @@ def send_welcome(message):
                 
                 ref_notify_msg = (
                     f"🎉 **সফল রেফারেল বোনাস!**\n\n"
-                    f"👤 **{first_name}** আপনার রেফারেলে জয়েন করেছে!\n"
+                    f"👤 **{first_name}** আপনার রেফারেলে জয়েন করেছে!\n"
                     f"💰 তার কাজের 10% কমিশন আপনার ব্যালেন্সে এড হতে থাকবে।"
                 )
                 try:
@@ -293,7 +293,7 @@ def callback_check_sub(call):
     user_id = call.from_user.id
     first_name = call.from_user.first_name
     if check_user_subscription(user_id):
-        bot.answer_callback_query(call.id, "✅ ধন্যবাদ! আপনার সাবস্ক্রিপশন ভেরিফাই হয়েছে।")
+        bot.answer_callback_query(call.id, "✅ ধন্যবাদ! আপনার সাবস্ক্রিপশন ভেরিফাই হয়েছে।")
         try:
             bot.delete_message(call.message.chat.id, call.message.message_id)
         except:
@@ -301,7 +301,7 @@ def callback_check_sub(call):
         welcome_msg = f"🥰 স্বাগতম, {first_name}!\n💎 কাজ শুরু করতে নিচের অপশনগুলো ব্যবহার করুন 🔽"
         bot.send_message(call.message.chat.id, welcome_msg, reply_markup=main_keyboard(), parse_mode="Markdown")
     else:
-        bot.answer_callback_query(call.id, "❌ আপনি এখনো চ্যানেলে জয়েন করেননি! দয়া করে আগে জয়েন করুন।", show_alert=True)
+        bot.answer_callback_query(call.id, "❌ আপনি এখনো চ্যানেলে জয়েন করেননি! দয়া করে আগে জয়েন করুন।", show_alert=True)
 
 # --- সাধারণ মেসেজ হ্যান্ডলার ---
 
@@ -321,7 +321,7 @@ def handle_menu(message):
 
     if text == '❌ বাতিল':
         user_data['state'] = None
-        bot.send_message(message.chat.id, "❌ **বাতিল করা হয়েছে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
+        bot.send_message(message.chat.id, "❌ **বাতিল করা হয়েছে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
         return
 
     current_state = user_data.get('state')
@@ -342,7 +342,7 @@ def handle_menu(message):
         })
         
         channel_msg = (
-            f"📥 **নতুন কাজ জমা পড়েছে!**\n\n"
+            f"📥 **নতুন কাজ জমা পড়েছে!**\n\n"
             f"👤 **User ID:** `{user_id}`\n"
             f"📌 **Type:** {task_type}\n"
             f"🟢 **Name:** {acc_name}\n"
@@ -369,7 +369,7 @@ def handle_menu(message):
         try:
             amount_to_log = float(text)
         except ValueError:
-            bot.send_message(message.chat.id, "⚠️ সঠিক সংখ্যায় টাকার পরিমাণ লিখুন।", reply_markup=cancel_keyboard(), parse_mode="Markdown")
+            bot.send_message(message.chat.id, "⚠️ সঠিক সংখ্যায় টাকার পরিমাণ লিখুন।", reply_markup=cancel_keyboard(), parse_mode="Markdown")
             return
 
         min_limit = 0.3 if "USDT" in method else (30.0 if "মোবাইল" in method else 50.0)
@@ -382,7 +382,7 @@ def handle_menu(message):
         user_data['state'] = None
         
         channel_withdraw_msg = (
-            f"💰 **নতুন উইথড্রয়াল রিকোয়েস্ট!**\n\n"
+            f"💰 **নতুন উইথড্রয়াল রিকোয়েস্ট!**\n\n"
             f"👤 **ইউজার:** {message.from_user.first_name}\n"
             f"🆔 **আইডি:** `{user_id}`\n"
             f"💵 **পরিমাণ:** {amount_to_log} টাকা\n"
@@ -394,7 +394,7 @@ def handle_menu(message):
         except:
             pass
 
-        bot.send_message(message.chat.id, f"✅ **আপনার উইথড্রয়াল রিকোয়েস্ট সফলভাবে জমা হয়েছে!**", reply_markup=main_keyboard(), parse_mode="Markdown")
+        bot.send_message(message.chat.id, f"✅ **আপনার উইথড্রয়াল রিকোয়েস্ট সফলভাবে জমা হয়েছে!**", reply_markup=main_keyboard(), parse_mode="Markdown")
         return
 
     # মেনু নেভিগেশন
@@ -416,7 +416,7 @@ def handle_menu(message):
             f"👤 **First name:** {first_name}\n"
             f"👤 **Last name:** {last_name}\n"
             f"🔐 **Password:** {password}\n\n"
-            f"📘 উপরের তথ্য দিয়ে অ্যাকাউন্ট খুলে নিচে **কুকিজ দিন** বাটনে চাপ দিন 🤪"
+            f"📘 উপরের তথ্য দিয়ে অ্যাকাউন্ট খুলে নিচে **কুকিজ দিন** বাটনে চাপ দিন 🤪"
         )
         bot.send_message(message.chat.id, msg_text, reply_markup=fb_task_action_keyboard(), parse_mode="Markdown")
     elif text == '📷 ইনস্টাগ্রাম 2fa (৳2.70)':
@@ -471,7 +471,7 @@ def handle_menu(message):
             f"💠 আপনি আপনার প্রতিটি রেফারেলের সম্পূর্ণ করা কাজ থেকে আয়ের 10% কমিশন পাবেন।"
         )
         
-        share_url = f"https://t.me/share/url?url={ref_link}&text=घर বসে প্রতিদিন আয় করুন ফ্রি তে! এখুনি জয়েন করুন:"
+        share_url = f"https://t.me/share/url?url={ref_link}&text=घर বসে প্রতিদিন আয় করুন ফ্রি তে! এখুনি জয়েন করুন:"
         referral_markup = types.InlineKeyboardMarkup(row_width=1)
         referral_markup.add(
             types.InlineKeyboardButton("🌐 শেয়ার করুন", url=share_url)
@@ -484,7 +484,7 @@ def handle_menu(message):
             "━━━━━━━━━━━━━━━━━━━\n\n"
             "সম্মানিত মেম্বার,\n"
             "আপনার যেকোনো সমস্যা বা জিজ্ঞাসার জন্য আমাদের সাপোর্ট টিমের সাথে যোগাযোগ করুন। আমরা দ্রুত সমাধান করার চেষ্টা করব।\n\n"
-            "⚠️ <b>নোট:</b> অযথা মেসেজ দেওয়া থেকে বিরত থাকুন। ধন্যবাদ!"
+            "⚠️ <b>নোট:</b> অযথা মেসেজ দেওয়া থেকে বিরত থাকুন। ধন্যবাদ!"
         )
         support_markup = types.InlineKeyboardMarkup(row_width=1)
         support_markup.add(
@@ -493,13 +493,12 @@ def handle_menu(message):
         )
         bot.send_message(message.chat.id, support_text, parse_mode="HTML", reply_markup=support_markup)
     elif text == '🧑‍💼 আমি নতুন':
-        bot.reply_to(message, "🔰 প্রতিদিন কাজ করুন এবং বন্ধুদের রেফার করে আয় বাড়ান।")
+        bot.reply_to(message, "🔰 প্রতিদিন কাজ করুন এবং বন্ধুদের রেফার করে আয় বাড়ান।")
     elif text == '🤪 কিভাবে কাজ করব':
-        bot.reply_to(message, "অ্যাকাউন্ট তৈরি করে প্রয়োজনীয় তথ্য জমা দিন।")
+        bot.reply_to(message, "অ্যাকাউন্ট তৈরি করে প্রয়োজনীয় তথ্য জমা দিন।")
 
 if __name__ == "__main__":
     bot.remove_webhook()
     if RENDER_EXTERNAL_URL:
         bot.set_webhook(url=f"{RENDER_EXTERNAL_URL.rstrip('/')}/{TOKEN}")
-    
-    port = int(os.environ.g
+  
