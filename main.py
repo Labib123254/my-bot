@@ -1,26 +1,19 @@
 import os
-import io
 import threading
-import random
-import string
 from flask import Flask
 import telebot
 from telebot import types
 
-# ১. ফ্লাস্ক সার্ভার সেটআপ
 app = Flask(__name__)
 
 @app.route('/')
 def home():
     return "Bot is running live 24/7!"
 
-# ২. টেলিগ্রাম বোট সেটআপ (পরিবেশ বা ভেরিয়েবল থেকে টোকেন নেওয়া নিরাপদ, চাইলে এখানেও দিতে পারেন)
-TOKEN = os.environ.get('BOT_TOKEN', '8720565653:AAFltxQwffiTi5DmTwQKud-Wh1SkZlyVHm8')
+TOKEN = '8720565653:AAFltxQwffiTi5DmTwQKud-Wh1SkZlyVHm8'
 bot = telebot.TeleBot(TOKEN, threaded=False)
 
-# আপনার অ্যাডমিন টেলিগ্রাম আইডি এখানে দিন (যাতে অন্য কেউ অ্যাডমিন কমান্ড চালাতে না পারে)
-ADMIN_ID = 6736272528  # <-- এখানে আপনার আসল টেলিগ্রাম আইডি বসিয়ে দিন
-
+ADMIN_ID = 6736272528
 CHANNEL_USERNAME = "@incomex1954"
 CHANNEL_URL = "https://t.me/incomex1954"
 CHANNEL_ID = "-1004324671942"
@@ -29,462 +22,64 @@ ADMIN_SUPPORT_URL = "https://t.me/Xsupportadmin1"
 users_db = {}
 tasks_list = []
 
-def get_user_data(user_id):
-    if user_id not in users_db:
-        users_db[user_id] = {
-            "balance": 0.0, 
-            "total_income": 0.0,
-            "completed_tasks": 0,
-            "pending_tasks": 0,
-            "referrals": 0, 
-            "refer_income": 0.0,
-            "referred_by": None,
-            "state": None, 
-            "withdraw_method": None, 
-            "generated_username": None,
-            "generated_password": None,
-            "task_type": None
-        }
-    return users_db[user_id]
+def get_user(uid):
+    if uid not in users_db:
+        users_db[uid] = {"balance": 0.0, "tasks": 0, "state": None, "method": None}
+    return users_db[uid]
 
-def check_user_subscription(user_id):
-    try:
-        member = bot.get_chat_member(CHANNEL_USERNAME, user_id)
-        if member.status in ['member', 'creator', 'administrator']:
-            return True
-    except Exception as e:
-        print(f"Subscription Check Error: {e}")
-    return False
+def main_kb():
+    m = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
+    m.add('📖 কাজ ▸', '💵 ব্যালেন্স', 'টাকা উত্তোলন', 'My Referrals', '🧐 সাপোর্ট', '🧑‍💼 আমি নতুন')
+    return m
 
-def generate_random_username():
-    names = ["Isabella Williams", "Sophia Brown", "Isabella Johnson", "Emma Davis", "Olivia Wilson"]
-    selected_name = random.choice(names)
-    num = "".join(random.choices(string.digits, k=4))
-    return f"{selected_name}_{num}"
-
-def generate_random_password():
-    return "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
-
-# --- কিবোর্ড বাটনসমূহ ---
-
-def main_keyboard():
-    markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
-    markup.add(
-        types.KeyboardButton('📖 কাজ ▸'),
-        types.KeyboardButton('💵 ব্যালেন্স'),
-        types.KeyboardButton('টাকা উত্তোলন'),
-        types.KeyboardButton('My Referrals'),
-        types.KeyboardButton('🧐 সাপোর্ট'),
-        types.KeyboardButton('🧑‍💼 আমি নতুন')
-    )
-    return markup
-
-def category_keyboard():
-    markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-    markup.add(
-        types.KeyboardButton('📷 ইনস্টাগ্রাম কাজ >'),
-        types.KeyboardButton('📧 Gmail কাজ'),
-        types.KeyboardButton('📘 Facebook কাজ'),
-        types.KeyboardButton('❌ বাতিল')
-    )
-    return markup
-
-def instagram_sub_keyboard():
-    markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-    markup.add(
-        types.KeyboardButton('📷 ইনস্টাগ্রাম 2fa (৳2.70)'),
-        types.KeyboardButton('⏮ ফিরে যান')
-    )
-    return markup
-
-def task_action_keyboard():
-    markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-    markup.add(
-        types.KeyboardButton('🔑 2FA Set'),
-        types.KeyboardButton('🤪 কিভাবে কাজ করব'),
-        types.KeyboardButton('⏮ ফিরে যান')
-    )
-    return markup
-
-def fb_task_action_keyboard():
-    markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-    markup.add(
-        types.KeyboardButton('🍪 Cookies দিন'),
-        types.KeyboardButton('🤪 কিভাবে কাজ করব'),
-        types.KeyboardButton('⏮ ফিরে যান')
-    )
-    return markup
-
-def cancel_keyboard():
-    markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-    markup.add(types.KeyboardButton('❌ বাতিল'))
-    return markup
-
-def withdraw_methods_keyboard():
-    markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-    markup.add(
-        types.KeyboardButton('USDT (BEP-20) -> সর্বনিম্ন: 0.3(-0.05)'),
-        types.KeyboardButton('বিকাশ (Personal) -> সর্বনিম্ন: ৫০ টাকা'),
-        types.KeyboardButton('মোবাইল রিচার্জ -> সর্বনিম্ন: ৩০ টাকা'),
-        types.KeyboardButton('❌ বাতিল')
-    )
-    return markup
-
-def sub_inline_keyboard():
-    markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton("📢 Subscribe to channel", url=CHANNEL_URL))
-    markup.add(types.InlineKeyboardButton("✅ Check subscription", callback_data="check_sub"))
-    return markup
-
-# --- সুরক্ষিত এডমিন কমান্ডসমূহ ---
-
-@bot.message_handler(commands=['gettasks'])
-def get_all_tasks_file(message):
-    if message.from_user.id != ADMIN_ID:
-        return
-        
-    if not tasks_list:
-        bot.reply_to(message, "⚠️ **এখনো কোনো টাস্ক জমা পড়েনি!**", parse_mode="Markdown")
-        return
-    
-    file_content = "=== ALL SUBMITTED TASKS ===\n\n"
-    for idx, item in enumerate(tasks_list, start=1):
-        file_content += (
-            f"[{idx}] User ID: {item['user_id']}\n"
-            f"    Type: {item['type']}\n"
-            f"    Name: {item['name']}\n"
-            f"    Pass: {item['pass']}\n"
-            f"    Submitted Data: {item['data']}\n"
-            f"----------------------------------------\n"
-        )
-    
-    file_data = io.BytesIO(file_content.encode('utf-8'))
-    file_data.name = f"All_Tasks_Total_{len(tasks_list)}.txt"
-    bot.send_document(message.chat.id, file_data, caption=f"📊 **মোট {len(tasks_list)} টি কাজের ফাইল একসাথে ডাউনলোড করা হয়েছে।**", parse_mode="Markdown")
-
-@bot.message_handler(commands=['cleartasks'])
-def clear_all_tasks(message):
-    if message.from_user.id != ADMIN_ID:
-        return
-        
-    global tasks_list
-    count = len(tasks_list)
-    tasks_list = []
-    bot.reply_to(message, f"🗑 **পূর্বের জমা হওয়া {count} টি টাস্ক ডাটা মুছে ফেলা হয়েছে।**", parse_mode="Markdown")
-
-@bot.message_handler(commands=['addbalance'])
-def add_user_balance(message):
-    if message.from_user.id != ADMIN_ID:
-        return
-        
-    args = message.text.split()
-    if len(args) < 3:
-        bot.reply_to(message, "⚠️ **সঠিক নিয়ম:** `/addbalance <user_id> <amount>`", parse_mode="Markdown")
-        return
-    
-    try:
-        target_user_id = int(args[1])
-        amount = float(args[2])
-        
-        target_user = get_user_data(target_user_id)
-        target_user['balance'] += amount
-        target_user['total_income'] += amount
-        target_user['completed_tasks'] += 1  
-        
-        if target_user['pending_tasks'] > 0:
-            target_user['pending_tasks'] -= 1
-        
-        referrer_id = target_user.get('referred_by')
-        if referrer_id and referrer_id in users_db:
-            commission = amount * 0.10
-            ref_user = users_db[referrer_id]
-            ref_user['balance'] += commission
-            ref_user['refer_income'] += commission
-            
-            try:
-                ref_notification = (
-                    f"💰 **রেফারেল কমিশন যুক্ত হয়েছে!**\n"
-                    f"আপনার রেফারেলে থাকা ইউজারের কাজ এপ্রুভ হওয়ার কারণে আপনি পেয়েছেন: `{commission:.2f} BDT` কমিশন।"
-                )
-                bot.send_message(referrer_id, ref_notification, parse_mode="Markdown")
-            except Exception as e:
-                print(f"Referrer Notification Error: {e}")
-
-        bot.reply_to(message, f"✅ সফলভাবে User ID: `{target_user_id}` এর ব্যালেন্সে `{amount} BDT` যোগ করা হয়েছে।", parse_mode="Markdown")
-        
-        try:
-            notification_msg = (
-                f"✅ **টাস্ক এপ্রুভ হয়েছে!**\n"
-                f"পরিমাণ: ১ টি\n"
-                f"💰 **যুক্ত হয়েছে: {amount:.2f} BDT**"
-            )
-            bot.send_message(target_user_id, notification_msg, parse_mode="Markdown")
-        except Exception as e:
-            print(f"User Notification Error: {e}")
-            
-    except ValueError:
-        bot.reply_to(message, "⚠️ ইউজার আইডি বা টাকার পরিমাণ সঠিক সংখ্যায় দিন।")
-
-@bot.message_handler(commands=['sendmsg'])
-def send_custom_message_to_user(message):
-    if message.from_user.id != ADMIN_ID:
-        return
-        
-    args = message.text.split(maxsplit=2)
-    if len(args) < 3:
-        bot.reply_to(message, "⚠️ **সঠিক নিয়ম:** `/sendmsg <user_id> <আপনার মেসেজ>`", parse_mode="Markdown")
-        return
-    
-    try:
-        target_user_id = int(args[1])
-        custom_message = args[2]
-        bot.send_message(target_user_id, f"📥 **অ্যাডমিনের মেসেজ:**\n\n{custom_message}", parse_mode="Markdown")
-        bot.reply_to(message, f"✅ সফলভাবে User ID: `{target_user_id}` এর কাছে মেসেজ পাঠানো হয়েছে।", parse_mode="Markdown")
-    except Exception as e:
-        bot.reply_to(message, f"❌ মেসেজ পাঠানো সম্ভব হয়নি। কারণ: {e}")
-
-# --- স্টার্ট কমান্ড ও রেফারেল হ্যান্ডলিং ---
+def cancel_kb():
+    m = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    m.add('❌ বাতিল')
+    return m
 
 @bot.message_handler(commands=['start'])
-def send_welcome(message):
-    user_id = message.from_user.id
-    first_name = message.from_user.first_name
-    user_data = get_user_data(user_id)
-    
-    args = message.text.split()
-    if len(args) > 1 and user_data['referred_by'] is None:
-        try:
-            referrer_id = int(args[1])
-            if referrer_id != user_id and referrer_id in users_db:
-                user_data['referred_by'] = referrer_id
-                users_db[referrer_id]['referrals'] += 1
-                
-                ref_notify_msg = (
-                    f"🎉 সফল রেফারেল বোনাস!\n\n"
-                    f"👤 {first_name} আপনার রেফারেলে জয়েন করেছে!\n"
-                    f"💰 তার কাজের 10% কমিশন আপনার ব্যালেন্সে এড হতে থাকবে।"
-                )
-                bot.send_message(referrer_id, ref_notify_msg, parse_mode="Markdown")
-        except ValueError:
-            pass
+def start_msg(message):
+    bot.send_message(message.chat.id, "স্বাগতম! কাজ শুরু করতে নিচের অপশন ব্যবহার করুন:", reply_markup=main_kb())
 
-    if not check_user_subscription(user_id):
-        text = f"📢 To use this bot you must subscribe to our channel: {CHANNEL_USERNAME}\n\n👇 Use the buttons below."
-        bot.send_message(message.chat.id, text, reply_markup=sub_inline_keyboard(), parse_mode="Markdown")
-    else:
-        welcome_msg = (
-            f"🥰 স্বাগতম, {first_name}!\n"
-            f"💎কাজ শুরু করতে নিচের অপশনগুলো ব্যবহার করুন 🔽"
-        )
-        bot.send_message(message.chat.id, welcome_msg, reply_markup=main_keyboard(), parse_mode="Markdown")
-
-@bot.callback_query_handler(func=lambda call: call.data == "check_sub")
-def verify_subscription(call):
-    user_id = call.from_user.id
-    first_name = call.from_user.first_name
-    
-    if check_user_subscription(user_id):
-        bot.answer_callback_query(call.id, "✅ ধন্যবাদ! আপনার সাবস্ক্রিপশন নিশ্চিত করা হয়েছে।")
-        try:
-            bot.delete_message(call.message.chat.id, call.message.message_id)
-        except:
-            pass
-        
-        welcome_msg = (
-            f"🥰 স্বাগতম, {first_name}!\n"
-            f"💎কাজ শুরু করতে নিচের অপশনগুলো ব্যবহার করুন 🔽"
-        )
-        bot.send_message(call.message.chat.id, welcome_msg, reply_markup=main_keyboard(), parse_mode="Markdown")
-    else:
-        bot.answer_callback_query(call.id, "❌ আপনি এখনো আমাদের চ্যানেলে জয়েন করেননি! দয়া করে আগে জয়েন করুন।", show_alert=True)
-
-# --- মেসেজ হ্যান্ডলিং ---
-
-@bot.message_handler(func=lambda message: True)
-def handle_menu(message):
-    user_id = message.from_user.id
+@bot.message_handler(func=lambda m: True)
+def handle_all(message):
+    uid = message.from_user.id
     text = message.text
-    
-    valid_texts = [
-        '📖 কাজ ▸', '💵 ব্যালেন্স', 'টাকা উত্তোলন', 'My Referrals', '🧐 সাপোর্ট', 
-        '🧑‍💼 আমি নতুন', '📷 ইনস্টাগ্রাম কাজ >', '📧 Gmail কাজ', '📘 Facebook কাজ', 
-        '📷 ইনস্টাগ্রাম 2fa (৳2.70)', '🔑 2FA Set', '🍪 Cookies দিন', 
-        'USDT (BEP-20) -> সর্বনিম্ন: 0.3(-0.05)', 'বিকাশ (Personal) -> সর্বনিম্ন: ৫০ টাকা', 
-        'মোবাইল রিচার্জ -> সর্বনিম্ন: ৩০ টাকা', '⏮ ফিরে যান', '🤪 কিভাবে কাজ করব', '❌ বাতিল'
-    ]
-
-    if text in valid_texts:
-        if not check_user_subscription(user_id) and text != '❌ বাতিল':
-            sub_text = f"📢 To use this bot you must subscribe to our channel: {CHANNEL_USERNAME}\n\n👇 Use the buttons below."
-            bot.send_message(message.chat.id, sub_text, reply_markup=sub_inline_keyboard(), parse_mode="Markdown")
-            return
-
-    user_data = get_user_data(user_id)
+    u = get_user(uid)
 
     if text == '❌ বাতিল':
-        user_data['state'] = None
-        bot.send_message(message.chat.id, "❌ **বাতিল করা হয়েছে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
+        u['state'] = None
+        bot.send_message(message.chat.id, "বাতিল করা হয়েছে।", reply_markup=main_kb())
         return
 
-    current_state = user_data.get('state')
-    
-    if current_state in ['WAITING_FOR_2FA', 'WAITING_FOR_FB_COOKIES']:
-        user_data['state'] = None
-        
-        acc_name = user_data.get('generated_username', 'Account User')
-        acc_pass = user_data.get('generated_password', '12345678')
-        task_type = user_data.get('task_type', 'টাস্ক')
-        
-        user_data['pending_tasks'] += 1
-        
-        tasks_list.append({
-            "user_id": user_id,
-            "type": task_type,
-            "name": acc_name,
-            "pass": acc_pass,
-            "data": text
-        })
-        
-        data_label = "Submitted Data (Cookies)" if current_state == 'WAITING_FOR_FB_COOKIES' else "Submitted Data (2FA)"
-        
-        channel_msg = (
-            f"📥 **নতুন কাজ জমা পড়েছে!**\n\n"
-            f"👤 **User ID:** `{user_id}`\n"
-            f"📌 **Type:** {task_type}\n"
-            f"🟢 **Name:** {acc_name}\n"
-            f"🔐 **Pass:** {acc_pass}\n\n"
-            f"📄 **{data_label}:**\n{text}"
-        )
-        
-        try:
-            bot.send_message(CHANNEL_ID, channel_msg, parse_mode="Markdown")
-        except Exception as e:
-            print(f"Channel Send Error: {e}")
+    if text == '💵 ব্যালেন্স':
+        bot.reply_to(message, f"আপনার ব্যালেন্স: {u['balance']:.2f} BDT")
 
-        success_reply = "✅ **Rcv**\n\nএটার টাকা খুব শীঘ্রই চেক করে আপনার ব্যালেন্সে এড করা হবে"
-        bot.send_message(message.chat.id, success_reply, reply_markup=main_keyboard(), parse_mode="Markdown")
-        return
-
-    elif current_state == 'WAITING_FOR_WITHDRAW_NUMBER':
-        method = user_data.get('withdraw_method', '')
-        balance = user_data['balance']
-        
-        if 'USDT' in method:
-            min_limit = 0.3
-            if balance < min_limit:
-                user_data['state'] = None
-                error_msg = f"❌ উইথড্র করার জন্য আপনার ব্যালেন্স পর্যাপ্ত নয়। মিনিমাম উইথড্র {min_limit}\nআপনার ব্যালেন্স: {balance:.2f}"
-                bot.send_message(message.chat.id, error_msg, reply_markup=main_keyboard(), parse_mode="Markdown")
-                return
-                
-            if len(text.strip()) < 30:
-                bot.send_message(message.chat.id, "❌ **সঠিক USDT (BEP-20) অ্যাড্রেস দিন (কমপক্ষে ৩০ অক্ষর):**", reply_markup=cancel_keyboard())
-                return
-                
-        elif 'বিকাশ' in method:
-            min_limit = 50.0
-            if balance < min_limit:
-                user_data['state'] = None
-                error_msg = f"❌ উইথড্র করার জন্য আপনার ব্যালেন্স পর্যাপ্ত নয়। মিনিমাম উইথড্র {min_limit} টাকা\nআপনার ব্যালেন্স: {balance:.2f}"
-                bot.send_message(message.chat.id, error_msg, reply_markup=main_keyboard(), parse_mode="Markdown")
-                return
-            if not text.isdigit() or len(text.strip()) != 11 or not text.startswith('01'):
-                bot.send_message(message.chat.id, "❌ **সঠিক বিকাশ নম্বর দিন** (১১ ডিজিটের সঠিক নম্বর লিখুন):", reply_markup=cancel_keyboard())
-                return
-                
-        elif 'মোবাইল রিচার্জ' in method:
-            min_limit = 30.0
-            if balance < min_limit:
-                user_data['state'] = None
-                error_msg = f"❌ উইথড্র করার জন্য আপনার ব্যালেন্স পর্যাপ্ত নয়। মিনিমাম উইথড্র {min_limit} টাকা\nআপনার ব্যালেন্স: {balance:.2f}"
-                bot.send_message(message.chat.id, error_msg, reply_markup=main_keyboard(), parse_mode="Markdown")
-                return
-            if not text.isdigit() or len(text.strip()) != 11 or not text.startswith('01'):
-                bot.send_message(message.chat.id, "❌ **সঠিক মোবাইল নম্বর দিন** (১১ ডিজিটের সঠিক নম্বর লিখুন):", reply_markup=cancel_keyboard())
-                return
-
-        user_data['state'] = None
-        
-        channel_withdraw_msg = (
-            f"💰 **নতুন উইথড্রয়াল রিকোয়েস্ট!**\n\n"
-            f"👤 **ইউজার:** {message.from_user.first_name}\n"
-            f"🆔 **আইডি:** `{user_id}`\n"
-            f"💵 **পরিমাণ:** {balance} টাকা\n"
-            f"🏦 **মেথড:** {method}\n"
-            f"📱 **অ্যাকাউন্ট/অ্যাড্রেস:** `{text}`"
-        )
-        
-        try:
-            bot.send_message(CHANNEL_ID, channel_withdraw_msg, parse_mode="Markdown")
-        except Exception as e:
-            print(f"Channel Withdraw Log Error: {e}")
-
-        bot.send_message(message.chat.id, f"✅ **আপনার উইথড্রয়াল রিকোয়েস্ট সফলভাবে জমা হয়েছে!**", reply_markup=main_keyboard(), parse_mode="Markdown")
-        return
-
-    # --- মেনু অ্যাকশনসমূহ ---
-
-    if text == '📖 কাজ ▸':
-        bot.send_message(message.chat.id, "🟣 **সিলেক্ট করুন:**", reply_markup=category_keyboard(), parse_mode="Markdown")
-
-    elif text == '📷 ইনস্টাগ্রাম কাজ >':
-        bot.send_message(message.chat.id, "🟣 **সিলেক্ট করুন:**", reply_markup=instagram_sub_keyboard(), parse_mode="Markdown")
-
-    elif text == '📘 Facebook কাজ':
-        username = generate_random_username()
-        password = generate_random_password()
-        user_data['generated_username'] = username
-        user_data['generated_password'] = password
-        user_data['task_type'] = "📘 Facebook কাজ"
-        
-        msg_text = (
-            f"👤 **First name:** {username.split('_')[0].split(' ')[0]}\n"
-            f"👤 **Last name:** {username.split('_')[0].split(' ')[-1]}\n"
-            f"🔐 **Password:** `{password}`\n\n"
-            f"📘 **উপরের তথ্য দিয়ে অ্যাকাউন্ট খুলে নিচে Cookies দিন বাটনে চাপ দিন 🤪**"
-        )
-        bot.send_message(message.chat.id, msg_text, reply_markup=fb_task_action_keyboard(), parse_mode="Markdown")
-
-    elif text == '📷 ইনস্টাগ্রাম 2fa (৳2.70)':
-        username = generate_random_username()
-        password = generate_random_password()
-        user_data['generated_username'] = username
-        user_data['generated_password'] = password
-        user_data['task_type'] = "📷 ইনস্টাগ্রাম কাজ"
-        
-        msg_text = (
-            f"👤 **Name:** `{username}`\n"
-            f"🔐 **Pass:** `{password}`\n\n"
-            f"📸 **উপরের নেম এবং পাসওয়ার্ড দিয়ে অ্যাকাউন্ট খুলুন। তারপর নিচে 2FA Set বাটনে ক্লিক করুন 🤪**"
-        )
-        bot.send_message(message.chat.id, msg_text, reply_markup=task_action_keyboard(), parse_mode="Markdown")
-
-    elif text == '🔑 2FA Set':
-        user_data['state'] = 'WAITING_FOR_2FA'
-        bot.send_message(message.chat.id, "📢 **2FA Key টি দিন:** 🎯", reply_markup=cancel_keyboard(), parse_mode="Markdown")
-
-    elif text == '🍪 Cookies দিন':
-        user_data['state'] = 'WAITING_FOR_FB_COOKIES'
-        bot.send_message(message.chat.id, "🍪 **আপনার ফেসবুক অ্যাকাউন্টের কুকিজটি দিন:** 🎯", reply_markup=cancel_keyboard(), parse_mode="Markdown")
+    elif text == '📖 কাজ ▸':
+        bot.send_message(message.chat.id, "কাজের বিবরণ বা লিংক দিন:")
 
     elif text == 'টাকা উত্তোলন':
-        user_data['state'] = 'SELECT_WITHDRAW_METHOD'
-        bot.send_message(message.chat.id, "💰 **টাকা তোলার মাধ্যম সিলেক্ট করুন:**", reply_markup=withdraw_methods_keyboard(), parse_mode="Markdown")
+        u['state'] = 'WITHDRAW'
+        bot.send_message(message.chat.id, "আপনার বিকাশ বা USDT নম্বর দিন:", reply_markup=cancel_kb())
 
-    elif text == 'USDT (BEP-20) -> সর্বনিম্ন: 0.3(-0.05)':
-        user_data['withdraw_method'] = text
-        user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
-        bot.send_message(message.chat.id, "📱 **আপনার USDT (BEP-20) অ্যাড্রেসটি লিখে পাঠান:**", reply_markup=cancel_keyboard(), parse_mode="Markdown")
+    elif u['state'] == 'WITHDRAW':
+        u['state'] = None
+        bot.send_message(message.chat.id, "আপনার উইথড্র রিকোয়েস্ট সফলভাবে জমা হয়েছে!", reply_markup=main_kb())
 
-    elif text == 'বিকাশ (Personal) -> সর্বনিম্ন: ৫০ টাকা':
-        user_data['withdraw_method'] = text
-        user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
-        bot.send_message(message.chat.id, "📱 **আপনার বিকাশ পার্সোনাল নম্বরটি লিখে পাঠান (১১ ডিজিট):**", reply_markup=cancel_keyboard(), parse_mode="Markdown")
+    else:
+        bot.send_message(message.chat.id, "দয়া করে নিচের মেনু থেকে অপশন সিলেক্ট করুন:", reply_markup=main_kb())
 
-    elif text == 'মোবাইল রিচার্জ -> সর্বনিম্ন: ৩০ টাকা':
-        user_data['withdraw_method'] = text
-        user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
-        bot.send_message(message.chat.id, "📱 **যে নম্বরে রিচার্জ নিতে চান সেটি লিখে পাঠান (১১ ডিজিট):**", reply_markup=cancel_keyboard(), parse_mode="Markdown")
+if __name__ == "__main__":
+    def run_bot():
+        try:
+            bot.remove_webhook()
+            bot.infinity_polling(skip_pending=True)
+        except Exception as e:
+            print(e)
 
-    elif text == '⏮ ফিরে যান':
-        bot.send_message(message.chat.id, "🟣 **সিলেক্ট করুন:**", reply_markup=
+    t = threading.Thread(target=run_bot)
+    t.daemon = True
+    t.start()
+
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    
