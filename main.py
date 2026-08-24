@@ -433,12 +433,19 @@ def handle_menu(message):
         )
         bot.send_message(message.chat.id, referral_msg, parse_mode="Markdown")
     elif text == '🧐 সাপোর্ট':
+        support_text = (
+            "📞 <b>গ্রাহক সেবা কেন্দ্র</b>\n"
+            "━━━━━━━━━━━━━━━━━━━\n\n"
+            "সম্মানিত মেম্বার,\n"
+            "আপনার যেকোনো সমস্যা বা জিজ্ঞাসার জন্য আমাদের সাপোর্ট টিমের সাথে যোগাযোগ করুন। আমরা দ্রুত সমাধান করার চেষ্টা করব।\n\n"
+            "⚠️ <b>নোট:</b> অযথা মেসেজ দেওয়া থেকে বিরত থাকুন। ধন্যবাদ!"
+        )
         support_markup = types.InlineKeyboardMarkup(row_width=1)
         support_markup.add(
             types.InlineKeyboardButton("🛠️ এডমিন সাপোর্ট", url=ADMIN_SUPPORT_URL),
             types.InlineKeyboardButton("🚀 অফিসিয়াল চ্যানেল", url=CHANNEL_URL)
         )
-        bot.send_message(message.chat.id, "যেকোনো সহায়তার জন্য যোগাযোগ করুন:", reply_markup=support_markup, parse_mode="Markdown")
+        bot.send_message(message.chat.id, support_text, parse_mode="HTML", reply_markup=support_markup)
     elif text == '🧑‍💼 আমি নতুন':
         bot.reply_to(message, "🔰 প্রতিদিন কাজ করুন এবং বন্ধুদের রেফার করে আয় বাড়ান।")
     elif text == '🤪 কিভাবে কাজ করব':
@@ -455,4 +462,4 @@ if __name__ == "__main__":
         pass
         
     bot.infinity_polling(skip_pending=True)
-    
+        
