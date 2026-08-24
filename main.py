@@ -7,16 +7,12 @@ from flask import Flask
 import telebot
 from telebot import types
 
-# ১. Web Server setup
+# ১. Web Server setup (Render-এর জন্য সরাসরি মেইন প্রসেসে রাখা হলো)
 app = Flask(__name__)
 
 @app.route('/')
 def home():
     return "Bot is running live 24/7!"
-
-def run_flask():
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
 
 # ২. Bot setup
 TOKEN = '8720565653:AAFltxQwffiTi5DmTwQKud-Wh1SkZlyVHm8'
@@ -350,7 +346,6 @@ def handle_menu(message):
         method = user_data.get('withdraw_method', '')
         balance = user_data['balance']
         
-        # ১. ব্যালেন্স ও লিমিট চেক
         min_limit = 0.3 if "USDT" in method else (30 if "রিচার্জ" in method else 50)
         
         if balance < min_limit:
@@ -362,14 +357,11 @@ def handle_menu(message):
             bot.send_message(message.chat.id, error_msg, reply_markup=main_keyboard(), parse_mode="Markdown")
             return
 
-        # ২. অ্যাড্রেস বা নম্বর ভ্যালিডেশন
         if "USDT" in method:
-            # USDT BEP-20 অ্যাড্রেস সাধারণত ৩০ থেকে ৩৫ বা তার বেশি অক্ষরের হয়
             if len(text.strip()) < 30:
                 bot.send_message(message.chat.id, "❌ **উইথড্র এড্রেসটি ভুল!** দয়া করে সঠিক USDT (BEP-20) অ্যাড্রেস দিন (কমপক্ষে ৩০ সংখ্যার)।", reply_markup=cancel_keyboard())
                 return
         else:
-            # বিকাশ বা রিচার্জের ক্ষেত্রে নম্বর চেক (সাধারণত ১১ ডিজিট)
             if not text.isdigit() or len(text.strip()) < 11:
                 bot.send_message(message.chat.id, "❌ **সঠিক মোবাইল নম্বর দিন!** দয়া করে ১১ ডিজিটের সঠিক বিকাশ বা রিচার্জ নম্বর দিন।", reply_markup=cancel_keyboard())
                 return
@@ -495,4 +487,7 @@ def handle_menu(message):
         bot.send_message(message.chat.id, referral_msg, reply_markup=share_markup, parse_mode="Markdown")
 
     elif text == '🧐 সাপোর্ট':
-        support
+        support_msg = (
+            f"আপনার যেকোনো প্রশ্ন, সমস্যা বা পরামর্শের জন্য আমাদের সহায়তা টিমের সাথে যোগাযোগ করতে পারেন। আমরা আপনার অনুরোধ দ্রুত পর্যালোচনা করে যথাসম্ভব দ্রুত সমাধান দেওয়ার চেষ্টা করব。\n\n"
+            f"⚠️ **অনুগ্রহ করে অপ্রয়োজনীয় মেসেজ পাঠানো থেকে বিরত থাকুন।**"
+     
