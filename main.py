@@ -201,6 +201,20 @@ def send_welcome(message):
     user_id = message.from_user.id
     first_name = message.from_user.first_name
     
+    # Referral handling
+    args = message.text.split()
+    if len(args) > 1:
+        try:
+            referrer_id = int(args[1])
+            if referrer_id != user_id:
+                u_data = get_user_data(user_id)
+                if u_data['referred_by'] is None:
+                    u_data['referred_by'] = referrer_id
+                    ref_user = get_user_data(referrer_id)
+                    ref_user['referrals'] += 1
+        except ValueError:
+            pass
+
     if not check_user_subscription(user_id):
         bot.send_message(message.chat.id, f"📢 বোট ব্যবহার করতে আমাদের চ্যানেলে জয়েন করুন: {CHANNEL_USERNAME}", reply_markup=sub_inline_keyboard())
     else:
@@ -297,7 +311,8 @@ def handle_menu(message):
         )
         bot.reply_to(message, balance_msg, parse_mode="Markdown")
     elif text == 'My Referrals':
-        ref_link = f"https://t.me/{bot.get_me().username}?start={user_id}"
+        bot_username = bot.get_me().username
+        ref_link = f"https://t.me/{bot_username}?start={user_id}"
         bot.send_message(message.chat.id, f"🎁 **My Referrals**\n👤 Total Refer: {user_data['referrals']}\n🔗 Link:\n{ref_link}", parse_mode="Markdown")
     elif text == '🧐 সাপোর্ট':
         bot.send_message(message.chat.id, "সাপোর্টের জন্য নিচের লিঙ্কে যোগাযোগ করুন:", reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("🛠️ এডমিন সাপোর্ট", url=ADMIN_SUPPORT_URL)))
@@ -305,6 +320,8 @@ def handle_menu(message):
         bot.reply_to(message, "🔰 প্রতিদিন কাজ করুন এবং বন্ধুদের রেফার করে আয় বাড়ান।")
     elif text == '⏮ ফিরে যান':
         bot.send_message(message.chat.id, "🟣 সিলেক্ট করুন:", reply_markup=category_keyboard())
+    elif text == '🤪 কিভাবে কাজ করব':
+        bot.reply_to(message, "ℹ️ প্রথমে অ্যাকাউন্ট খুলে ইউজারনেম ও পাসওয়ার্ড দিয়ে আপনার 2FA Key বা Cookies সাবমিট করুন। অ্যাডমিন চেক করার পর ব্যালেন্স যোগ করে দেবে।")
     else:
         bot.send_message(message.chat.id, "দয়া করে নিচের মেনু থেকে অপশন ব্যবহার করুন:", reply_markup=main_keyboard())
 
@@ -318,4 +335,4 @@ if __name__ == "__main__":
 
     threading.Thread(target=run_bot, daemon=True).start()
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
-                         
+    
