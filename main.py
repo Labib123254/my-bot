@@ -149,7 +149,7 @@ def clear_all_tasks(message):
     tasks_list = []
     bot.reply_to(message, f"🗑 **পূর্বের জমা হওয়া {count} টি টাস্ক ডাটা মুছে ফেলা হয়েছে।**", parse_mode="Markdown")
 
-# ইউজারের কাজ এপ্রুভ করে ব্যালেন্স ও টাস্ক কাউন্ট বাড়ানোর এডমিন কমান্ড
+# ১. ব্যালেন্স ও টাস্ক কাউন্ট বাড়ানোর এডমিন কমান্ড
 @bot.message_handler(commands=['addbalance'])
 def add_user_balance(message):
     args = message.text.split()
@@ -183,6 +183,27 @@ def add_user_balance(message):
             
     except ValueError:
         bot.reply_to(message, "⚠️ ইউজার আইডি বা টাকার পরিমাণ সঠিক সংখ্যায় দিন।")
+
+# ২. নির্দিষ্ট ইউজারকে সরাসরি মেসেজ পাঠানোর এডমিন কমান্ড (নতুন যোগ করা হলো)
+@bot.message_handler(commands=['sendmsg'])
+def send_custom_message_to_user(message):
+    args = message.text.split(maxsplit=2)
+    
+    if len(args) < 3:
+        bot.reply_to(message, "⚠️ **সঠিক নিয়ম:** `/sendmsg <user_id> <আপনার মেসেজ>`\nউদাহরণ: `/sendmsg 7882520506 ভাই আপনার কাজটা দারুণ হয়েছে!`", parse_mode="Markdown")
+        return
+    
+    try:
+        target_user_id = int(args[1])
+        custom_message = args[2]
+        
+        bot.send_message(target_user_id, f"📥 **অ্যাডমিনের মেসেজ:**\n\n{custom_message}", parse_mode="Markdown")
+        bot.reply_to(message, f"✅ সফলভাবে User ID: `{target_user_id}` এর কাছে মেসেজ পাঠানো হয়েছে।", parse_mode="Markdown")
+        
+    except ValueError:
+        bot.reply_to(message, "⚠️ ইউজার আইডিটি সঠিক সংখ্যায় দিন।")
+    except Exception as e:
+        bot.reply_to(message, f"❌ মেসেজ পাঠানো সম্ভব হয়নি। কারণ: {e}")
 
 # --- মেসেজ হ্যান্ডলিং ---
 
