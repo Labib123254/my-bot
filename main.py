@@ -32,10 +32,12 @@ def get_user_data(user_id):
     if user_id not in users_db:
         users_db[user_id] = {
             "balance": 0.0, 
+            "total_income": 0.0,
+            "completed_tasks": 0,
+            "pending_tasks": 0,
             "referrals": 0, 
             "state": None, 
             "withdraw_method": None, 
-            "current_task": None,
             "generated_username": None,
             "generated_password": None,
             "task_type": None
@@ -92,7 +94,6 @@ def task_action_keyboard():
     )
     return markup
 
-# ফেসবুক কাজের জন্য কীবোর্ড (UID-এর বদলে কুকিজ সাবমিটের অপশন)
 def fb_task_action_keyboard():
     markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
     markup.add(
@@ -148,6 +149,41 @@ def clear_all_tasks(message):
     tasks_list = []
     bot.reply_to(message, f"🗑 **পূর্বের জমা হওয়া {count} টি টাস্ক ডাটা মুছে ফেলা হয়েছে।**", parse_mode="Markdown")
 
+# ইউজারের কাজ এপ্রুভ করে ব্যালেন্স ও টাস্ক কাউন্ট বাড়ানোর এডমিন কমান্ড
+@bot.message_handler(commands=['addbalance'])
+def add_user_balance(message):
+    args = message.text.split()
+    if len(args) < 3:
+        bot.reply_to(message, "⚠️ **সঠিক নিয়ম:** `/addbalance <user_id> <amount>`\nউদাহরণ: `/addbalance 123456789 5.00`", parse_mode="Markdown")
+        return
+    
+    try:
+        target_user_id = int(args[1])
+        amount = float(args[2])
+        
+        target_user = get_user_data(target_user_id)
+        target_user['balance'] += amount
+        target_user['total_income'] += amount
+        target_user['completed_tasks'] += 1  
+        
+        if target_user['pending_tasks'] > 0:
+            target_user['pending_tasks'] -= 1
+        
+        bot.reply_to(message, f"✅ সফলভাবে User ID: `{target_user_id}` এর ব্যালেন্সে `{amount} BDT` যোগ করা হয়েছে।", parse_mode="Markdown")
+        
+        try:
+            notification_msg = (
+                f"✅ **টাস্ক এপ্রুভ হয়েছে!**\n"
+                f"পরিমাণ: ১ টি\n"
+                f"💰 **যুক্ত হয়েছে: {amount:.2f} BDT**"
+            )
+            bot.send_message(target_user_id, notification_msg, parse_mode="Markdown")
+        except Exception as e:
+            print(f"User Notification Error: {e}")
+            
+    except ValueError:
+        bot.reply_to(message, "⚠️ ইউজার আইডি বা টাকার পরিমাণ সঠিক সংখ্যায় দিন।")
+
 # --- মেসেজ হ্যান্ডলিং ---
 
 @bot.message_handler(commands=['start'])
@@ -166,7 +202,6 @@ def handle_menu(message):
     user_data = get_user_data(user_id)
     text = message.text
 
-    # বাতিল বা মেনুতে ফিরে যাওয়ার কমন হ্যান্ডলিং
     if text == '❌ বাতিল':
         user_data['state'] = None
         bot.send_message(message.chat.id, "❌ **বাতিল করা হয়েছে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
@@ -181,7 +216,8 @@ def handle_menu(message):
         acc_pass = user_data.get('generated_password', '12345678')
         task_type = user_data.get('task_type', 'টাস্ক')
         
-        # মেমোরিতে টাস্ক জমিয়ে রাখা
+        user_data['pending_tasks'] += 1
+        
         tasks_list.append({
             "user_id": user_id,
             "type": task_type,
@@ -190,7 +226,6 @@ def handle_menu(message):
             "data": text
         })
         
-        # পাবলিক চ্যানেলে মেসেজ পাঠানো
         data_label = "Submitted Data (Cookies)" if current_state == 'WAITING_FOR_FB_COOKIES' else "Submitted Data (2FA)"
         channel_msg = (
             f"📥 **নতুন কাজ জমা পড়েছে!**\n\n"
@@ -206,7 +241,6 @@ def handle_menu(message):
         except Exception as e:
             print(f"Channel Send Error: {e}")
 
-        # আপনি যে মেসেজটি চাচ্ছিলেন সেটি এখানে সেট করা হলো
         success_reply = "✅ **Rcv**\n\nএটার টাকা খুব শীঘ্রই চেক করে আপনার ব্যালেন্সে এড করা হবে"
         bot.send_message(message.chat.id, success_reply, reply_markup=main_keyboard(), parse_mode="Markdown")
         return
@@ -298,7 +332,21 @@ def handle_menu(message):
 
     elif text == '💵 ব্যালেন্স':
         bal = user_data["balance"]
-        bot.reply_to(message, f"👤 **আপনার প্রোফাইল:**\n\n💰 বর্তমান ব্যালেন্স: {bal} টাকা\n👥 মোট রেফারাল: {user_data['referrals']} জন", parse_mode="Markdown")
+        total_inc = user_data["total_income"]
+        comp_tasks = user_data["completed_tasks"]
+        pend_tasks = user_data["pending_tasks"]
+        
+        balance_msg = (
+            f"💵 **আপনার ব্যালেন্স**\n"
+            f"━━━━━━━━━━━━━━━━━━━\n"
+            f"💸 **ব্যালেন্স:** {bal:.2f} BDT\n"
+            f"⏳ **পেন্ডিং (উইথড্র):** 0.00 BDT\n"
+            f"💰 **Total Income:** {total_inc:.2f} BDT\n"
+            f"━━━━━━━━━━━━━━━━━━━\n"
+            f"✅ **সম্পন্ন কাজ:** {comp_tasks} টি\n"
+            f"⏳ **রিভিউতে আছে:** {pend_tasks} টি"
+        )
+        bot.reply_to(message, balance_msg, parse_mode="Markdown")
 
     elif text == '🎁 My Referrals':
         bot_username = bot.get_me().username
