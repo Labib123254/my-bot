@@ -60,8 +60,8 @@ def main_keyboard():
     markup.add(
         types.KeyboardButton('📖 কাজ ▸'),
         types.KeyboardButton('💵 ব্যালেন্স'),
-        types.KeyboardButton('💰 টাকা উত্তোলন'),
-        types.KeyboardButton('🎁 My Referrals'),
+        types.KeyboardButton('উইথড্র'),
+        types.KeyboardButton('মাই রেফারেল'),
         types.KeyboardButton('🧐 সাপোর্ট'),
         types.KeyboardButton('🧑‍💼 আমি নতুন')
     )
@@ -109,11 +109,11 @@ def cancel_keyboard():
     return markup
 
 def withdraw_methods_keyboard():
-    markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
+    markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
     markup.add(
-        types.KeyboardButton('Bkash'),
-        types.KeyboardButton('Nagad'),
-        types.KeyboardButton('Rocket'),
+        types.KeyboardButton('USDT (BEP-20) -> সর্বনিম্ন: 0.3(-0.05)'),
+        types.KeyboardButton('মোবাইল রিচার্জ -> সর্বনিম্ন: ৩০(-৫)'),
+        types.KeyboardButton('বিকাশ -> সর্বনিম্ন: ৫০ (-৫)'),
         types.KeyboardButton('❌ বাতিল')
     )
     return markup
@@ -184,7 +184,7 @@ def add_user_balance(message):
     except ValueError:
         bot.reply_to(message, "⚠️ ইউজার আইডি বা টাকার পরিমাণ সঠিক সংখ্যায় দিন।")
 
-# ২. নির্দিষ্ট ইউজারকে সরাসরি মেসেজ পাঠানোর এডমিন কমান্ড (নতুন যোগ করা হলো)
+# ২. নির্দিষ্ট ইউজারকে সরাসরি মেসেজ পাঠানোর এডমিন কমান্ড
 @bot.message_handler(commands=['sendmsg'])
 def send_custom_message_to_user(message):
     args = message.text.split(maxsplit=2)
@@ -278,7 +278,7 @@ def handle_menu(message):
             f"🆔 **আইডি:** `{user_id}`\n"
             f"💵 **পরিমাণ:** {amount} টাকা\n"
             f"🏦 **মেথড:** {method}\n"
-            f"📱 **নম্বর:** `{text}`"
+            f"📱 **নম্বর/অ্যাকাউন্ট:** `{text}`"
         )
         
         try:
@@ -286,7 +286,7 @@ def handle_menu(message):
         except Exception as e:
             print(f"Channel Notification Error: {e}")
 
-        bot.send_message(message.chat.id, f"✅ **আপনার {amount} টাকা উইথড্রয়াল রিকোয়েস্ট জমা হয়েছে!**", reply_markup=main_keyboard(), parse_mode="Markdown")
+        bot.send_message(message.chat.id, f"✅ **আপনার উইথড্রয়াল রিকোয়েস্ট সফলভাবে জমা হয়েছে!**", reply_markup=main_keyboard(), parse_mode="Markdown")
         return
 
     # --- মেনু অ্যাকশনসমূহ ---
@@ -336,17 +336,14 @@ def handle_menu(message):
         user_data['state'] = 'WAITING_FOR_FB_COOKIES'
         bot.send_message(message.chat.id, "🍪 **আপনার ফেসবুক অ্যাকাউন্টের কুকিজটি দিন:** 🎯", reply_markup=cancel_keyboard(), parse_mode="Markdown")
 
-    elif text == '💰 টাকা উত্তোলন':
-        if user_data['balance'] < 50:
-            bot.reply_to(message, f"❌ **আপনার ব্যালেন্স পর্যাপ্ত নয়!**\nবর্তমান ব্যালেন্স: {user_data['balance']} টাকা।\nসর্বনিম্ন উইথড্র: ৫০ টাকা।")
-        else:
-            user_data['state'] = 'SELECT_WITHDRAW_METHOD'
-            bot.send_message(message.chat.id, "🏦 **পেমেন্ট মেথড সিলেক্ট করুন:**", reply_markup=withdraw_methods_keyboard(), parse_mode="Markdown")
+    elif text == 'উইথড্র':
+        user_data['state'] = 'SELECT_WITHDRAW_METHOD'
+        bot.send_message(message.chat.id, "💰 **টাকা তোলার মাধ্যম সিলেক্ট করুন:**", reply_markup=withdraw_methods_keyboard(), parse_mode="Markdown")
 
-    elif text in ['Bkash', 'Nagad', 'Rocket']:
+    elif text in ['USDT (BEP-20) -> সর্বনিম্ন: 0.3(-0.05)', 'মোবাইল রিচার্জ -> সর্বনিম্ন: ৩০(-৫)', 'বিকাশ -> সর্বনিম্ন: ৫০ (-৫)']:
         user_data['withdraw_method'] = text
         user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
-        bot.send_message(message.chat.id, f"📱 **আপনার {text} নম্বরটি লিখে পাঠান:**", reply_markup=cancel_keyboard(), parse_mode="Markdown")
+        bot.send_message(message.chat.id, f"📱 **আপনার {text} অ্যাকাউন্ট/নম্বরটি লিখে পাঠান:**", reply_markup=cancel_keyboard(), parse_mode="Markdown")
 
     elif text == '⏮ ফিরে যান':
         bot.send_message(message.chat.id, "🟣 **সিলেক্ট করুন:**", reply_markup=category_keyboard(), parse_mode="Markdown")
@@ -369,7 +366,7 @@ def handle_menu(message):
         )
         bot.reply_to(message, balance_msg, parse_mode="Markdown")
 
-    elif text == '🎁 My Referrals':
+    elif text == 'মাই রেফারেল':
         bot_username = bot.get_me().username
         ref_link = f"https://t.me/{bot_username}?start={user_id}"
         bot.reply_to(message, f"🔗 **আপনার রেফারাল লিংক:**\n{ref_link}\n\nপ্রতি সফল রেফারে পাবেন ১০ টাকা!", parse_mode="Markdown")
@@ -388,4 +385,4 @@ if __name__ == "__main__":
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
     bot.infinity_polling()
-    
+        
