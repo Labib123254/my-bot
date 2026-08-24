@@ -25,7 +25,7 @@ bot = telebot.TeleBot(TOKEN)
 # আপনার চ্যানেল আইডি ও এডমিন ইউজারনেম/লিংক
 CHANNEL_USERNAME = "@INCOMEXSUPPORT"
 CHANNEL_URL = "https://t.me/INCOMEXSUPPORT"
-CHANNEL_ID = "@hi54854" # কাজের নোটিফিকেশন পাঠানোর চ্যানেল
+CHANNEL_ID = "@hi54854" # সব কাজের এবং উইথড্রর নোটিফিকেশন যাওয়ার চ্যানেল
 ADMIN_SUPPORT_URL = "https://t.me/Xsupportadmin1"
 
 users_db = {}
@@ -493,4 +493,4 @@ if __name__ == "__main__":
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
     bot.infinity_polling()
-        
+    
