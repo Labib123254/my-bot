@@ -14,9 +14,12 @@ app = Flask(__name__)
 def home():
     return "Bot is running live 24/7!"
 
-# ২. টেলিগ্রাম বোট সেটআপ
-TOKEN = '8720565653:AAFltxQwffiTi5DmTwQKud-Wh1SkZlyVHm8'
+# ২. টেলিগ্রাম বোট সেটআপ (পরিবেশ বা ভেরিয়েবল থেকে টোকেন নেওয়া নিরাপদ, চাইলে এখানেও দিতে পারেন)
+TOKEN = os.environ.get('BOT_TOKEN', '8720565653:AAFltxQwffiTi5DmTwQKud-Wh1SkZlyVHm8')
 bot = telebot.TeleBot(TOKEN, threaded=False)
+
+# আপনার অ্যাডমিন টেলিগ্রাম আইডি এখানে দিন (যাতে অন্য কেউ অ্যাডমিন কমান্ড চালাতে না পারে)
+ADMIN_ID = 6736272528  # <-- এখানে আপনার আসল টেলিগ্রাম আইডি বসিয়ে দিন
 
 CHANNEL_USERNAME = "@incomex1954"
 CHANNEL_URL = "https://t.me/incomex1954"
@@ -133,10 +136,13 @@ def sub_inline_keyboard():
     markup.add(types.InlineKeyboardButton("✅ Check subscription", callback_data="check_sub"))
     return markup
 
-# --- এডমিন কমান্ডসমূহ ---
+# --- সুরক্ষিত এডমিন কমান্ডসমূহ ---
 
 @bot.message_handler(commands=['gettasks'])
 def get_all_tasks_file(message):
+    if message.from_user.id != ADMIN_ID:
+        return
+        
     if not tasks_list:
         bot.reply_to(message, "⚠️ **এখনো কোনো টাস্ক জমা পড়েনি!**", parse_mode="Markdown")
         return
@@ -158,6 +164,9 @@ def get_all_tasks_file(message):
 
 @bot.message_handler(commands=['cleartasks'])
 def clear_all_tasks(message):
+    if message.from_user.id != ADMIN_ID:
+        return
+        
     global tasks_list
     count = len(tasks_list)
     tasks_list = []
@@ -165,6 +174,9 @@ def clear_all_tasks(message):
 
 @bot.message_handler(commands=['addbalance'])
 def add_user_balance(message):
+    if message.from_user.id != ADMIN_ID:
+        return
+        
     args = message.text.split()
     if len(args) < 3:
         bot.reply_to(message, "⚠️ **সঠিক নিয়ম:** `/addbalance <user_id> <amount>`", parse_mode="Markdown")
@@ -215,6 +227,9 @@ def add_user_balance(message):
 
 @bot.message_handler(commands=['sendmsg'])
 def send_custom_message_to_user(message):
+    if message.from_user.id != ADMIN_ID:
+        return
+        
     args = message.text.split(maxsplit=2)
     if len(args) < 3:
         bot.reply_to(message, "⚠️ **সঠিক নিয়ম:** `/sendmsg <user_id> <আপনার মেসেজ>`", parse_mode="Markdown")
@@ -354,7 +369,6 @@ def handle_menu(message):
         method = user_data.get('withdraw_method', '')
         balance = user_data['balance']
         
-        # ১. ব্যালেন্স চেক (USDT এর জন্য সর্বনিম্ন 0.3)
         if 'USDT' in method:
             min_limit = 0.3
             if balance < min_limit:
@@ -363,7 +377,6 @@ def handle_menu(message):
                 bot.send_message(message.chat.id, error_msg, reply_markup=main_keyboard(), parse_mode="Markdown")
                 return
                 
-            # ২. USDT অ্যাড্রেস অন্তত ৩০ ক্যারেক্টার হতে হবে, কম হলে ভুল দেখাবে
             if len(text.strip()) < 30:
                 bot.send_message(message.chat.id, "❌ **সঠিক USDT (BEP-20) অ্যাড্রেস দিন (কমপক্ষে ৩০ অক্ষর):**", reply_markup=cancel_keyboard())
                 return
@@ -474,15 +487,4 @@ def handle_menu(message):
         bot.send_message(message.chat.id, "📱 **যে নম্বরে রিচার্জ নিতে চান সেটি লিখে পাঠান (১১ ডিজিট):**", reply_markup=cancel_keyboard(), parse_mode="Markdown")
 
     elif text == '⏮ ফিরে যান':
-        bot.send_message(message.chat.id, "🟣 **সিলেক্ট করুন:**", reply_markup=category_keyboard(), parse_mode="Markdown")
-
-    elif text == '💵 ব্যালেন্স':
-        bal = user_data["balance"]
-        total_inc = user_data["total_income"]
-        comp_tasks = user_data["completed_tasks"]
-        pend_tasks = user_data["pending_tasks"]
-        
-        balance_msg = (
-            f"💵 **আপনার ব্যালেন্স**\n"
-            f"━━━━━━━━━━━━━━━━━━━\n"
-            f"💸 **ব্যালেন
+        bot.send_message(message.chat.id, "🟣 **সিলেক্ট করুন:**", reply_markup=
