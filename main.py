@@ -3,24 +3,20 @@ import io
 import threading
 import random
 import string
-from flask import Flask
+from flask import Flask, request
 import telebot
 from telebot import types
 
 # ১. Web Server setup (Render-এর জন্য)
 app = Flask(__name__)
 
-@app.route('/')
-def home():
-    return "Bot is running live 24/7!"
-
-def run_flask():
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
-
 # ২. Bot setup
 TOKEN = os.environ.get('BOT_TOKEN')
-bot = telebot.TeleBot(TOKEN)
+bot = telebot.TeleBot(TOKEN, threaded=False)
+
+# রেন্ডারের লাইভ ওয়েব সার্ভিস ইউআরএল এখানে স্বয়ংক্রিয়ভাবে কাজ করবে অথবা আপনার রেন্ডার অ্যাপের লিংক দিতে পারেন
+# যেমন: https://your-app-name.onrender.com/
+RENDER_EXTERNAL_URL = os.environ.get('RENDER_EXTERNAL_URL', '')
 
 ADMIN_USERNAMES = ["Trillionaire_9"]
 
@@ -57,7 +53,6 @@ def get_user_data(user_id):
         }
     return users_db[user_id]
 
-# ইউজার চ্যানেলে জয়েন করেছে কি না তা চেক করার ফাংশন
 def check_user_subscription(user_id):
     try:
         member = bot.get_chat_member(CHANNEL_USERNAME, user_id)
@@ -158,6 +153,22 @@ def withdraw_methods_keyboard():
     )
     return markup
 
+# --- ফ্লাস্ক রুট এবং ওয়েব হুক কনফিগারেশন ---
+
+@app.route('/')
+def home():
+    return "Bot is running live via Webhook!"
+
+@app.route(f'/{TOKEN}', methods=['POST'])
+def webhook():
+    if request.headers.get('content-type') == 'application/json':
+        json_string = request.get_data().decode('utf-8')
+        update = telebot.types.Update.de_json(json_string)
+        bot.process_new_updates([update])
+        return "!", 200
+    else:
+        return "Invalid Data", 403
+
 # --- এডমিন কমান্ডসমূহ ---
 
 @bot.message_handler(commands=['gettasks'])
@@ -227,7 +238,6 @@ def send_welcome(message):
     first_name = message.from_user.first_name
     user_data = get_user_data(user_id)
     
-    # রেফারেল হ্যান্ডলিং
     args = message.text.split()
     if len(args) > 1 and user_data['referred_by'] is None:
         try:
@@ -239,7 +249,6 @@ def send_welcome(message):
         except ValueError:
             pass
 
-    # ফোর্চ সাবস্ক্রিপশন চেক
     if not check_user_subscription(user_id):
         sub_msg = (
             f"📢 To use this bot you must subscribe to our channel: {CHANNEL_USERNAME}\n\n"
@@ -452,14 +461,11 @@ def handle_menu(message):
         bot.reply_to(message, "অ্যাকাউন্ট তৈরি করে প্রয়োজনীয় তথ্য জমা দিন।")
 
 if __name__ == "__main__":
-    flask_thread = threading.Thread(target=run_flask)
-    flask_thread.daemon = True
-    flask_thread.start()
+    # পুরোনো যেকোনো ওয়েবহুক বা পোলিং ক্লিয়ার করে নতুন ওয়েবহুক সেটআপ করা
+    bot.remove_webhook()
+    if RENDER_EXTERNAL_URL:
+        bot.set_webhook(url=f"{RENDER_EXTERNAL_URL.rstrip('/')}/{TOKEN}")
     
-    try:
-        bot.remove_webhook()
-    except:
-        pass
-        
-    bot.infinity_polling(skip_pending=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
         
