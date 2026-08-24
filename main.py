@@ -18,8 +18,8 @@ def run_flask():
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
 
-# ২. Bot setup
-TOKEN = '8720565653:AAFltxQwffiTi5DmTwQKud-Wh1SkZlyVHm8'
+# ২. Bot setup (নতুন সিকিউর টোকেন আপডেট করা হয়েছে)
+TOKEN = '8720565653:AAEbxTTrFcO07pF_2l7mHL2AhZ-ZKA3v5Sc'
 bot = telebot.TeleBot(TOKEN)
 
 # আপনার ইউজারনেম দিয়ে অ্যাডমিন ভেরিফিকেশন
@@ -469,7 +469,7 @@ def handle_menu(message):
         )
         
         share_markup = types.InlineKeyboardMarkup()
-        share_url = f"https://t.me/share/url?url={ref_link}&text=घर বসে অনলাইন থেকে প্রতিদিন ইনকাম করুন! এখনই বোটটিতে জয়েন করুন:"
+        share_url = f"https://t.me/share/url?url={ref_link}&text=ঘর বসে অনলাইন থেকে প্রতিদিন ইনকাম করুন! এখনই বোটটিতে জয়েন করুন:"
         share_markup.add(types.InlineKeyboardButton("🔄 শেয়ার করুন", url=share_url))
         
         bot.send_message(message.chat.id, referral_msg, reply_markup=share_markup, parse_mode="Markdown")
