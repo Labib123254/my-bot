@@ -18,7 +18,7 @@ def run_flask():
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
 
-# ২. Bot setup (Updated New Token)
+# ২. Bot setup
 TOKEN = '8720565653:AAFltxQwffiTi5DmTwQKud-Wh1SkZlyVHm8'
 bot = telebot.TeleBot(TOKEN)
 
@@ -412,7 +412,7 @@ def handle_menu(message):
         else:
             user_data['withdraw_method'] = text
             user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
-            bot.send_message(message.chat.id, f"📱 **আপনার {text} অ্যাকাউন্ট/নম্বরটি লিখে পাঠান:**", reply_markup=cancel_keyboard(), parse_mode="Markdown")
+            bot.send_message(message.chat.id, "USDT (BEP-20) অ্যাড্রেসটি দিন", reply_markup=cancel_keyboard(), parse_mode="Markdown")
 
     elif text == 'মোবাইল রিচার্জ -> সর্বনিম্ন: ৩০(-৫)':
         if user_data['balance'] < 30.0:
@@ -420,7 +420,7 @@ def handle_menu(message):
         else:
             user_data['withdraw_method'] = text
             user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
-            bot.send_message(message.chat.id, f"📱 **আপনার {text} অ্যাকাউন্ট/নম্বরটি লিখে পাঠান:**", reply_markup=cancel_keyboard(), parse_mode="Markdown")
+            bot.send_message(message.chat.id, "মোবাইল রিচার্জ নম্বরটি দিন", reply_markup=cancel_keyboard(), parse_mode="Markdown")
 
     elif text == 'বিকাশ -> সর্বনিম্ন: ৫০ (-৫)':
         if user_data['balance'] < 50.0:
@@ -428,7 +428,7 @@ def handle_menu(message):
         else:
             user_data['withdraw_method'] = text
             user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
-            bot.send_message(message.chat.id, f"📱 **আপনার {text} অ্যাকাউন্ট/নম্বরটি লিখে পাঠান:**", reply_markup=cancel_keyboard(), parse_mode="Markdown")
+            bot.send_message(message.chat.id, "বিকাশ নম্বরটি দিন", reply_markup=cancel_keyboard(), parse_mode="Markdown")
 
     elif text == '⏮ ফিরে যান':
         bot.send_message(message.chat.id, "🟣 **সিলেক্ট করুন:**", reply_markup=category_keyboard(), parse_mode="Markdown")
