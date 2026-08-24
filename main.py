@@ -30,11 +30,10 @@ def is_admin(message):
         return True
     return False
 
-# চ্যানেল কনফিগারেশন (আপনার চ্যানেল বা গ্রুপের ইউজারনেম ও আইডি)
-CHANNEL_USERNAME = "@INCOMEXSUPPORT"  # অথবা আপনার চ্যানেলের ইউজারনেম দিন
-CHANNEL_ID = "-1004324671942"
-ADMIN_SUPPORT_URL = "https://t.me/Xsupportadmin1"
+# চ্যানেল কনফিগারেশন
+CHANNEL_USERNAME = "@INCOMEXSUPPORT"  
 CHANNEL_URL = "https://t.me/INCOMEXSUPPORT"
+ADMIN_SUPPORT_URL = "https://t.me/Xsupportadmin1"
 
 users_db = {}
 tasks_list = []
@@ -58,16 +57,18 @@ def get_user_data(user_id):
         }
     return users_db[user_id]
 
-# ইউজার চ্যানেলে জয়েন করেছে কি না তা চেক করার ফাংশন
+# ইউজার চ্যানেলে জয়েন করেছে কি না তা নিখুঁতভাবে চেক করার ফাংশন
 def check_user_subscription(user_id):
     try:
-        member = bot.get_chat_member(CHANNEL_ID, user_id)
+        # বটকে অবশ্যই চ্যানেলের অ্যাডমিন হতে হবে, তবেই এটি কাজ করবে
+        member = bot.get_chat_member(CHANNEL_USERNAME, user_id)
         if member.status in ['member', 'creator', 'administrator']:
             return True
+        else:
+            return False
     except Exception as e:
-        # যদি চ্যানেল আইডি দিয়ে বট চেক করতে না পারে, তবে ট্রু রিটার্ন করে আটকে না রেখে চালিয়ে নেওয়ার ব্যবস্থা রাখা যেতে পারে
-        return True 
-    return False
+        # কোনো কারণে এপিআই এরর দিলে ডিফল্টভাবে False রিটার্ন করবে যাতে সাবস্ক্রিপশন মিস না হয়
+        return False
 
 def generate_random_username():
     names = ["Isabella Williams", "Sophia Brown", "Isabella Johnson", "Emma Davis", "Olivia Wilson"]
@@ -306,7 +307,7 @@ def handle_menu(message):
             f"📄 **Data:**\n{text}"
         )
         try:
-            bot.send_message(CHANNEL_ID, channel_msg, parse_mode="Markdown")
+            bot.send_message(CHANNEL_USERNAME, channel_msg, parse_mode="Markdown")
         except:
             pass
 
@@ -346,7 +347,7 @@ def handle_menu(message):
             f"📱 **অ্যাকাউন্ট:** `{address}`"
         )
         try:
-            bot.send_message(CHANNEL_ID, channel_withdraw_msg, parse_mode="Markdown")
+            bot.send_message(CHANNEL_USERNAME, channel_withdraw_msg, parse_mode="Markdown")
         except:
             pass
 
