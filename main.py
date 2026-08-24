@@ -121,8 +121,8 @@ def withdraw_methods_keyboard():
     markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
     markup.add(
         types.KeyboardButton('USDT (BEP-20) -> সর্বনিম্ন: 0.3(-0.05)'),
-        types.KeyboardButton('মোবাইল রিচার্জ -> সর্বনিম্ন: ৩০(-৫)'),
-        types.KeyboardButton('বিকাশ -> সর্বনিম্ন: ৫০ (-৫)'),
+        types.KeyboardButton('বিকাশ (Personal) -> সর্বনিম্ন: ৫০ টাকা'),
+        types.KeyboardButton('মোবাইল রিচার্জ -> সর্বনিম্ন: ৩০ টাকা'),
         types.KeyboardButton('❌ বাতিল')
     )
     return markup
@@ -290,8 +290,16 @@ def handle_menu(message):
     user_id = message.from_user.id
     text = message.text
     
-    if text in ['📖 কাজ ▸', '💵 ব্যালেন্স', 'টাকা উত্তোলন', 'My Referrals', '🧐 সাপোর্ট', '🧑‍💼 আমি নতুন', '📷 ইনস্টাগ্রাম কাজ >', '📧 Gmail কাজ', '📘 Facebook কাজ', '📷 ইনস্টাগ্রাম 2fa (৳2.70)', '🔑 2FA Set', '🍪 Cookies দিন', 'USDT (BEP-20) -> সর্বনিম্ন: 0.3(-0.05)', 'মোবাইল রিচার্জ -> সর্বনিম্ন: ৩০(-৫)', 'বিকাশ -> সর্বনিম্ন: ৫০ (-৫)', '⏮ ফিরে যান', '🤪 কিভাবে কাজ করব']:
-        if not check_user_subscription(user_id):
+    valid_texts = [
+        '📖 কাজ ▸', '💵 ব্যালেন্স', 'টাকা উত্তোলন', 'My Referrals', '🧐 সাপোর্ট', 
+        '🧑‍💼 আমি নতুন', '📷 ইনস্টাগ্রাম কাজ >', '📧 Gmail কাজ', '📘 Facebook কাজ', 
+        '📷 ইনস্টাগ্রাম 2fa (৳2.70)', '🔑 2FA Set', '🍪 Cookies দিন', 
+        'USDT (BEP-20) -> সর্বনিম্ন: 0.3(-0.05)', 'বিকাশ (Personal) -> সর্বনিম্ন: ৫০ টাকা', 
+        'মোবাইল রিচার্জ -> সর্বনিম্ন: ৩০ টাকা', '⏮ ফিরে যান', '🤪 কিভাবে কাজ করব', '❌ বাতিল'
+    ]
+
+    if text in valid_texts:
+        if not check_user_subscription(user_id) and text != '❌ বাতিল':
             sub_text = f"📢 To use this bot you must subscribe to our channel: {CHANNEL_USERNAME}\n\n👇 Use the buttons below."
             bot.send_message(message.chat.id, sub_text, reply_markup=sub_inline_keyboard(), parse_mode="Markdown")
             return
@@ -346,24 +354,40 @@ def handle_menu(message):
         method = user_data.get('withdraw_method', '')
         balance = user_data['balance']
         
-        min_limit = 0.3 if "USDT" in method else (30 if "রিচার্জ" in method else 50)
-        
-        if balance < min_limit:
-            user_data['state'] = None
-            error_msg = (
-                f"❌ উইথড্র করার জন্য আপনার ব্যালেন্স পর্যাপ্ত নয়। মিনিমাম উইথড্র {min_limit}\n"
-                f"আপনার ব্যালেন্স: {balance:.2f}"
-            )
-            bot.send_message(message.chat.id, error_msg, reply_markup=main_keyboard(), parse_mode="Markdown")
-            return
-
-        if "USDT" in method:
-            if len(text.strip()) < 30:
-                bot.send_message(message.chat.id, "❌ **উইথড্র এড্রেসটি ভুল!** দয়া করে সঠিক USDT (BEP-20) অ্যাড্রেস দিন (কমপক্ষে ৩০ সংখ্যার)।", reply_markup=cancel_keyboard())
+        # ১. প্রথমে ব্যালেন্স চেক করা (সব মেথডের জন্য)
+        if 'USDT' in method:
+            min_limit = 0.3
+            if balance < min_limit:
+                user_data['state'] = None
+                error_msg = f"❌ উইথড্র করার জন্য আপনার ব্যালেন্স পর্যাপ্ত নয়। মিনিমাম উইথড্র {min_limit}\nআপনার ব্যালেন্স: {balance:.2f}"
+                bot.send_message(message.chat.id, error_msg, reply_markup=main_keyboard(), parse_mode="Markdown")
                 return
-        else:
-            if not text.isdigit() or len(text.strip()) < 11:
-                bot.send_message(message.chat.id, "❌ **সঠিক মোবাইল নম্বর দিন!** দয়া করে ১১ ডিজিটের সঠিক বিকাশ বা রিচার্জ নম্বর দিন।", reply_markup=cancel_keyboard())
+                
+            # ২. USDT অ্যাড্রেস লেন্থ চেক (কমপক্ষে ৩০ বা তার বেশি ক্যারেক্টার হতে হবে)
+            if len(text.strip()) < 30:
+                bot.send_message(message.chat.id, "❌ **উইথড্র এড্রেসটি ভুল!**", reply_markup=cancel_keyboard())
+                return
+                
+        elif 'বিকাশ' in method:
+            min_limit = 50.0
+            if balance < min_limit:
+                user_data['state'] = None
+                error_msg = f"❌ উইথড্র করার জন্য আপনার ব্যালেন্স পর্যাপ্ত নয়। মিনিমাম উইথড্র {min_limit} টাকা\nআপনার ব্যালেন্স: {balance:.2f}"
+                bot.send_message(message.chat.id, error_msg, reply_markup=main_keyboard(), parse_mode="Markdown")
+                return
+            if not text.isdigit() or len(text.strip()) != 11 or not text.startswith('01'):
+                bot.send_message(message.chat.id, "❌ **সঠিক বিকাশ নম্বর দিন** (১১ ডিজিটের সঠিক নম্বর লিখুন):", reply_markup=cancel_keyboard())
+                return
+                
+        elif 'মোবাইল রিচার্জ' in method:
+            min_limit = 30.0
+            if balance < min_limit:
+                user_data['state'] = None
+                error_msg = f"❌ উইথড্র করার জন্য আপনার ব্যালেন্স পর্যাপ্ত নয়। মিনিমাম উইথড্র {min_limit} টাকা\nআপনার ব্যালেন্স: {balance:.2f}"
+                bot.send_message(message.chat.id, error_msg, reply_markup=main_keyboard(), parse_mode="Markdown")
+                return
+            if not text.isdigit() or len(text.strip()) != 11 or not text.startswith('01'):
+                bot.send_message(message.chat.id, "❌ **সঠিক মোবাইল নম্বর দিন** (১১ ডিজিটের সঠিক নম্বর লিখুন):", reply_markup=cancel_keyboard())
                 return
 
         user_data['state'] = None
@@ -374,7 +398,7 @@ def handle_menu(message):
             f"🆔 **আইডি:** `{user_id}`\n"
             f"💵 **পরিমাণ:** {balance} টাকা\n"
             f"🏦 **মেথড:** {method}\n"
-            f"📱 **নম্বর/অ্যাকাউন্ট:** `{text}`"
+            f"📱 **অ্যাকাউন্ট/অ্যাড্রেস:** `{text}`"
         )
         
         try:
@@ -434,16 +458,20 @@ def handle_menu(message):
         user_data['state'] = 'SELECT_WITHDRAW_METHOD'
         bot.send_message(message.chat.id, "💰 **টাকা তোলার মাধ্যম সিলেক্ট করুন:**", reply_markup=withdraw_methods_keyboard(), parse_mode="Markdown")
 
-    elif text in ['USDT (BEP-20) -> সর্বনিম্ন: 0.3(-0.05)', 'মোবাইল রিচার্জ -> সর্বনিম্ন: ৩০(-৫)', 'বিকাশ -> সর্বনিম্ন: ৫০ (-৫)']:
+    elif text == 'USDT (BEP-20) -> সর্বনিম্ন: 0.3(-0.05)':
         user_data['withdraw_method'] = text
         user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
-        
-        if "USDT" in text:
-            prompt_text = "📱 **আপনার USDT (BEP-20) অ্যাড্রেসটি লিখে পাঠান (কমপক্ষে ৩০ সংখ্যার):**"
-        else:
-            prompt_text = f"📱 **আপনার {text.split('->')[0].strip()} নম্বরটি লিখে পাঠান:**"
-            
-        bot.send_message(message.chat.id, prompt_text, reply_markup=cancel_keyboard(), parse_mode="Markdown")
+        bot.send_message(message.chat.id, "📱 **আপনার USDT (BEP-20) অ্যাড্রেসটি লিখে পাঠান:**", reply_markup=cancel_keyboard(), parse_mode="Markdown")
+
+    elif text == 'বিকাশ (Personal) -> সর্বনিম্ন: ৫০ টাকা':
+        user_data['withdraw_method'] = text
+        user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
+        bot.send_message(message.chat.id, "📱 **আপনার বিকাশ পার্সোনাল নম্বরটি লিখে পাঠান (১১ ডিজিট):**", reply_markup=cancel_keyboard(), parse_mode="Markdown")
+
+    elif text == 'মোবাইল রিচার্জ -> সর্বনিম্ন: ৩০ টাকা':
+        user_data['withdraw_method'] = text
+        user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
+        bot.send_message(message.chat.id, "📱 **যে নম্বরে রিচার্জ নিতে চান সেটি লিখে পাঠান (১১ ডিজিট):**", reply_markup=cancel_keyboard(), parse_mode="Markdown")
 
     elif text == '⏮ ফিরে যান':
         bot.send_message(message.chat.id, "🟣 **সিলেক্ট করুন:**", reply_markup=category_keyboard(), parse_mode="Markdown")
@@ -458,38 +486,4 @@ def handle_menu(message):
             f"💵 **আপনার ব্যালেন্স**\n"
             f"━━━━━━━━━━━━━━━━━━━\n"
             f"💸 **ব্যালেন্স:** {bal:.2f} BDT\n"
-            f"⏳ **পেন্ডিং (উইথড্র):** 0.00 BDT\n"
-            f"💰 **Total Income:** {total_inc:.2f} BDT\n"
-            f"━━━━━━━━━━━━━━━━━━━\n"
-            f"✅ **সম্পন্ন কাজ:** {comp_tasks} টি\n"
-            f"⏳ **রিভিউতে আছে:** {pend_tasks} টি"
-        )
-        bot.reply_to(message, balance_msg, parse_mode="Markdown")
-
-    elif text == 'My Referrals':
-        bot_username = bot.get_me().username
-        ref_link = f"https://t.me/{bot_username}?start={user_id}"
-        total_ref = user_data["referrals"]
-        ref_inc = user_data["refer_income"]
-        
-        referral_msg = (
-            f"🎁 **My Referrals**\n"
-            f"👤 **Total Refer:** {total_ref}\n"
-            f"💲 **Total Refer Income:** {ref_inc:.2f} BDT\n"
-            f"🔗 **আপনার রেফার লিংক:**\n{ref_link}\n\n"
-            f"ℹ️ **আপনি আপনার প্রতিটি রেফারেলের সম্পূর্ণ করা কাজ থেকে আয়ের 10% কমিশন পাবেন।**"
-        )
-        
-        share_markup = types.InlineKeyboardMarkup()
-        share_url = f"https://t.me/share/url?url={ref_link}&text=घर বসে অনলাইন থেকে প্রতিদিন ইনকাম করুন! এখনই বোটটিতে জয়েন করুন:"
-        share_markup.add(types.InlineKeyboardButton("🔄 শেয়ার করুন", url=share_url))
-        
-        bot.send_message(message.chat.id, referral_msg, reply_markup=share_markup, parse_mode="Markdown")
-
-    elif text == '🧐 সাপোর্ট':
-        support_msg = (
-            f"আপনার যেকোনো প্রশ্ন, সমস্যা বা পরামর্শের জন্য আমাদের সহায়তা টিমের সাথে যোগাযোগ করতে পারেন। আমরা আপনার অনুরোধ দ্রুত পর্যালোচনা করে যথাসম্ভব দ্রুত সমাধান দেওয়ার চেষ্টা করব。\n\n"
-            f"⚠️ **অনুগ্রহ করে অপ্রয়োজনীয় মেসেজ পাঠানো থেকে বিরত থাকুন।**"
-        )
-        
- 
+   
