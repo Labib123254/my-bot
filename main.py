@@ -349,14 +349,23 @@ def handle_menu(message):
 
     elif current_state == 'WAITING_FOR_WITHDRAW_NUMBER':
         method = user_data.get('withdraw_method', 'N/A')
-        amount = user_data['balance']
+        
+        deduct_amount = 0.3 if "USDT" in method else (30.0 if "মোবাইল" in method else 50.0)
+        
+        if user_data['balance'] < deduct_amount:
+            user_data['state'] = None
+            bot.send_message(message.chat.id, f"❌ উইড্রোর জন্য পর্যাপ্ত ব্যালেন্স নেই।\nআপনার ব্যালেন্স: {user_data['balance']:.2f} BDT", reply_markup=main_keyboard(), parse_mode="Markdown")
+            return
+
+        user_data['balance'] -= deduct_amount
+        amount_to_log = deduct_amount
         user_data['state'] = None
         
         channel_withdraw_msg = (
             f"💰 **নতুন উইথড্রয়াল রিকোয়েস্ট!**\n\n"
             f"👤 **ইউজার:** {message.from_user.first_name}\n"
             f"🆔 **আইডি:** `{user_id}`\n"
-            f"💵 **পরিমাণ:** {amount} টাকা\n"
+            f"💵 **পরিমাণ:** {amount_to_log} টাকা\n"
             f"🏦 **মেথড:** {method}\n"
             f"📱 **নম্বর/অ্যাকাউন্ট:** `{text}`"
         )
@@ -478,12 +487,4 @@ def handle_menu(message):
             f"ℹ️ **আপনি আপনার প্রতিটি রেফারেলের সম্পূর্ণ করা কাজ থেকে আয়ের 10% কমিশন পাবেন।**"
         )
         
-        share_markup = types.InlineKeyboardMarkup()
-        share_url = f"https://t.me/share/url?url={ref_link}&text=घर বসে অনলাইন থেকে প্রতিদিন ইনকাম করুন! এখনই বোটটিতে জয়েন করুন:"
-        share_markup.add(types.InlineKeyboardButton("🔄 শেয়ার করুন", url=share_url))
-        
-        bot.send_message(message.chat.id, referral_msg, reply_markup=share_markup, parse_mode="Markdown")
-
-    elif text == '🧐 সাপোর্ট':
-        support_msg = (
-            f"আপনার যেকোনো প্রশ্ন, সমস্যা বা পরামর্শের জন্য আমা
+        share_markup = types.InlineKeyboa
