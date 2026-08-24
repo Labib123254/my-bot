@@ -92,6 +92,16 @@ def task_action_keyboard():
     )
     return markup
 
+# ফেসবুক কাজের জন্য কীবোর্ড (UID-এর বদলে কুকিজ সাবমিটের অপশন)
+def fb_task_action_keyboard():
+    markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+    markup.add(
+        types.KeyboardButton('🍪 Cookies দিন'),
+        types.KeyboardButton('🤪 কিভাবে কাজ করব'),
+        types.KeyboardButton('⏮ ফিরে যান')
+    )
+    return markup
+
 def cancel_keyboard():
     markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
     markup.add(types.KeyboardButton('❌ বাতিল'))
@@ -162,13 +172,14 @@ def handle_menu(message):
         bot.send_message(message.chat.id, "❌ **বাতিল করা হয়েছে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
         return
 
-    # ১. ২FA জমার পার্ট
-    if user_data.get('state') == 'WAITING_FOR_2FA':
+    # ১. ২FA বা Facebook Cookies জমার পার্ট
+    if user_data.get('state') in ['WAITING_FOR_2FA', 'WAITING_FOR_FB_COOKIES']:
+        current_state = user_data.get('state')
         user_data['state'] = None
         
-        acc_name = user_data.get('generated_username', 'Isabella Williams')
-        acc_pass = user_data.get('generated_password', 'vxebd@23')
-        task_type = user_data.get('task_type', '📷 ইনস্টাগ্রাম কাজ')
+        acc_name = user_data.get('generated_username', 'Account User')
+        acc_pass = user_data.get('generated_password', '12345678')
+        task_type = user_data.get('task_type', 'টাস্ক')
         
         # মেমোরিতে টাস্ক জমিয়ে রাখা
         tasks_list.append({
@@ -180,13 +191,14 @@ def handle_menu(message):
         })
         
         # পাবলিক চ্যানেলে মেসেজ পাঠানো
+        data_label = "Submitted Data (Cookies)" if current_state == 'WAITING_FOR_FB_COOKIES' else "Submitted Data (2FA)"
         channel_msg = (
             f"📥 **নতুন কাজ জমা পড়েছে!**\n\n"
             f"👤 **User ID:** `{user_id}`\n"
             f"📌 **Type:** {task_type}\n"
             f"🟢 **Name:** {acc_name}\n"
             f"🔐 **Pass:** {acc_pass}\n\n"
-            f"📄 **Submitted Data (2FA):**\n{text}"
+            f"📄 **{data_label}:**\n{text}"
         )
         
         try:
@@ -194,7 +206,9 @@ def handle_menu(message):
         except Exception as e:
             print(f"Channel Send Error: {e}")
 
-        bot.send_message(message.chat.id, "✅ **আপনার ২FA কোডটি সফলভাবে জমা হয়েছে এবং চ্যানেলে পাঠানো হয়েছে!**", reply_markup=main_keyboard(), parse_mode="Markdown")
+        # আপনি যে মেসেজটি চাচ্ছিলেন সেটি এখানে সেট করা হলো
+        success_reply = "✅ **Rcv**\n\nএটার টাকা খুব শীঘ্রই চেক করে আপনার ব্যালেন্সে এড করা হবে"
+        bot.send_message(message.chat.id, success_reply, reply_markup=main_keyboard(), parse_mode="Markdown")
         return
 
     # ২. উইথড্র পার্ট
@@ -228,6 +242,22 @@ def handle_menu(message):
     elif text == '📷 ইনস্টাগ্রাম কাজ >':
         bot.send_message(message.chat.id, "🟣 **সিলেক্ট করুন:**", reply_markup=instagram_sub_keyboard(), parse_mode="Markdown")
 
+    elif text == '📘 Facebook কাজ':
+        username = generate_random_username()
+        password = generate_random_password()
+        
+        user_data['generated_username'] = username
+        user_data['generated_password'] = password
+        user_data['task_type'] = "📘 Facebook কাজ"
+        
+        msg_text = (
+            f"👤 **First name:** {username.split('_')[0].split(' ')[0]}\n"
+            f"👤 **Last name:** {username.split('_')[0].split(' ')[-1]}\n"
+            f"🔐 **Password:** `{password}`\n\n"
+            f"📘 **উপরের তথ্য দিয়ে অ্যাকাউন্ট খুলে নিচে Cookies দিন বাটনে চাপ দিন 🤪**"
+        )
+        bot.send_message(message.chat.id, msg_text, reply_markup=fb_task_action_keyboard(), parse_mode="Markdown")
+
     elif text == '📷 ইনস্টাগ্রাম 2fa (৳2.70)':
         username = generate_random_username()
         password = generate_random_password()
@@ -246,6 +276,10 @@ def handle_menu(message):
     elif text == '🔑 2FA Set':
         user_data['state'] = 'WAITING_FOR_2FA'
         bot.send_message(message.chat.id, "📢 **2FA Key টি দিন:** 🎯", reply_markup=cancel_keyboard(), parse_mode="Markdown")
+
+    elif text == '🍪 Cookies দিন':
+        user_data['state'] = 'WAITING_FOR_FB_COOKIES'
+        bot.send_message(message.chat.id, "🍪 **আপনার ফেসবুক অ্যাকাউন্টের কুকিজটি দিন:** 🎯", reply_markup=cancel_keyboard(), parse_mode="Markdown")
 
     elif text == '💰 টাকা উত্তোলন':
         if user_data['balance'] < 50:
@@ -278,11 +312,11 @@ def handle_menu(message):
         bot.reply_to(message, "🔰 **নিয়ম:** প্রতিদিন কাজ করুন এবং বন্ধুদের রেফার করে আয় বাড়ান।", parse_mode="Markdown")
 
     elif text == '🤪 কিভাবে কাজ করব':
-        bot.reply_to(message, "ইনস্টাগ্রামে অ্যাকাউন্ট তৈরি করে ২FA ব্যাকআপ কোড জমা দিন।")
+        bot.reply_to(message, "অ্যাকাউন্ট তৈরি করে প্রয়োজনীয় তথ্য (2FA বা Cookies) জমা দিন।")
 
 # ৩. Execution
 if __name__ == "__main__":
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
     bot.infinity_polling()
-        
+    
