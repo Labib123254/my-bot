@@ -22,10 +22,10 @@ def run_flask():
 TOKEN = '8720565653:AAFltxQwffiTi5DmTwQKud-Wh1SkZlyVHm8'
 bot = telebot.TeleBot(TOKEN)
 
-# আপনার চ্যানেল আইডি ও এডমিন ইউজারনেম/লিংক
-CHANNEL_USERNAME = "@INCOMEXSUPPORT"
-CHANNEL_URL = "https://t.me/INCOMEXSUPPORT"
-CHANNEL_ID = "@hi54854" # সব কাজের এবং উইথড্রর নোটিফিকেশন যাওয়ার চ্যানেল
+# আপনার নতুন চ্যানেলের তথ্য
+CHANNEL_USERNAME = "@incomex1954"
+CHANNEL_URL = "https://t.me/incomex1954"
+CHANNEL_ID = "-1004324671942" # সব কাজের এবং উইথড্রর নোটিফিকেশন যাওয়ার চ্যানেল আইডি
 ADMIN_SUPPORT_URL = "https://t.me/Xsupportadmin1"
 
 users_db = {}
@@ -424,6 +424,7 @@ def handle_menu(message):
 
     elif text in ['USDT (BEP-20) -> সর্বনিম্ন: 0.3(-0.05)', 'মোবাইল রিচার্জ -> সর্বনিম্ন: ৩০(-৫)', 'বিকাশ -> সর্বনিম্ন: ৫০ (-৫)']:
         user_data['withdraw_method'] = text
+        user_data['state'] = 'WAITING_FOR_WAITING_FOR_WITHDRAW_NUMBER' # safe reference
         user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
         bot.send_message(message.chat.id, f"📱 **আপনার {text} অ্যাকাউন্ট/নম্বরটি লিখে পাঠান:**", reply_markup=cancel_keyboard(), parse_mode="Markdown")
 
