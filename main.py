@@ -18,8 +18,8 @@ def run_flask():
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
 
-# ২. Bot setup (নতুন সিকিউর টোকেন আপডেট করা হয়েছে)
-TOKEN = '8720565653:AAEbxTTrFcO07pF_2l7mHL2AhZ-ZKA3v5Sc'
+# ২. Bot setup (Render-এর এনভায়রনমেন্ট থেকে টোকেন নেবে)
+TOKEN = os.environ.get('BOT_TOKEN')
 bot = telebot.TeleBot(TOKEN)
 
 # আপনার ইউজারনেম দিয়ে অ্যাডমিন ভেরিফিকেশন
