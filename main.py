@@ -1,4 +1,4 @@
-Import os
+import os
 import io
 import threading
 import random
@@ -23,8 +23,8 @@ TOKEN = '8720565653:AAFltxQwffiTi5DmTwQKud-Wh1SkZlyVHm8'
 bot = telebot.TeleBot(TOKEN)
 
 # চ্যানেল কনফিগারেশন
-CHANNEL_USERNAME = "@incomex1954"
-CHANNEL_URL = "https://t.me/incomex1954"
+CHANNEL_USERNAME = "@INCOMEXSUPPORT"
+CHANNEL_URL = "https://t.me/INCOMEXSUPPORT"
 CHANNEL_ID = "-1004324671942"
 ADMIN_SUPPORT_URL = "https://t.me/Xsupportadmin1"
 
@@ -295,7 +295,6 @@ def handle_menu(message):
     user_id = message.from_user.id
     text = message.text
     
-    # মেনু বাটনে ক্লিক করলে বা সাবস্ক্রিপশন চেক
     if text in ['📖 কাজ ▸', '💵 ব্যালেন্স', 'টাকা উত্তোলন', 'My Referrals', '🧐 সাপোর্ট', '🧑‍💼 আমি নতুন', '📷 ইনস্টাগ্রাম কাজ >', '📧 Gmail কাজ', '📘 Facebook কাজ', '📷 ইনস্টাগ্রাম 2fa (৳2.70)', '🔑 2FA Set', '🍪 Cookies দিন', 'USDT (BEP-20) -> সর্বনিম্ন: 0.3(-0.05)', 'মোবাইল রিচার্জ -> সর্বনিম্ন: ৩০(-৫)', 'বিকাশ -> সর্বনিম্ন: ৫০ (-৫)', '⏮ ফিরে যান', '🤪 কিভাবে কাজ করব']:
         if not check_user_subscription(user_id):
             sub_text = f"📢 To use this bot you must subscribe to our channel: {CHANNEL_USERNAME}\n\n👇 Use the buttons below."
@@ -309,7 +308,6 @@ def handle_menu(message):
         bot.send_message(message.chat.id, "❌ **বাতিল করা হয়েছে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
         return
 
-    # স্টেট অনুযায়ী কাজের ডেটা রিসিভ করা
     current_state = user_data.get('state')
     
     if current_state in ['WAITING_FOR_2FA', 'WAITING_FOR_FB_COOKIES']:
@@ -420,10 +418,30 @@ def handle_menu(message):
         user_data['state'] = 'SELECT_WITHDRAW_METHOD'
         bot.send_message(message.chat.id, "💰 **টাকা তোলার মাধ্যম সিলেক্ট করুন:**", reply_markup=withdraw_methods_keyboard(), parse_mode="Markdown")
 
-    elif text in ['USDT (BEP-20) -> সর্বনিম্ন: 0.3(-0.05)', 'মোবাইল রিচার্জ -> সর্বনিম্ন: ৩০(-৫)', 'বিকাশ -> সর্বনিম্ন: ৫০ (-৫)']:
-        user_data['withdraw_method'] = text
-        user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
-        bot.send_message(message.chat.id, f"📱 **আপনার {text} অ্যাকাউন্ট/নম্বরটি লিখে পাঠান:**", reply_markup=cancel_keyboard(), parse_mode="Markdown")
+    # --- উইথড্র মেথড ও ব্যালেন্স চেক লজিক ---
+    elif text == 'USDT (BEP-20) -> সর্বনিম্ন: 0.3(-0.05)':
+        if user_data['balance'] < 0.3:
+            bot.send_message(message.chat.id, f"❌ উইড্রোর জন্য পর্যাপ্ত ব্যালেন্স নেই।\nআপনার ব্যালেন্স: {user_data['balance']:.2f} BDT", reply_markup=main_keyboard(), parse_mode="Markdown")
+        else:
+            user_data['withdraw_method'] = text
+            user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
+            bot.send_message(message.chat.id, f"📱 **আপনার {text} অ্যাকাউন্ট/নম্বরটি লিখে পাঠান:**", reply_markup=cancel_keyboard(), parse_mode="Markdown")
+
+    elif text == 'মোবাইল রিচার্জ -> সর্বনিম্ন: ৩০(-৫)':
+        if user_data['balance'] < 30.0:
+            bot.send_message(message.chat.id, f"❌ উইড্রোর জন্য পর্যাপ্ত ব্যালেন্স নেই।\nআপনার ব্যালেন্স: {user_data['balance']:.2f} BDT", reply_markup=main_keyboard(), parse_mode="Markdown")
+        else:
+            user_data['withdraw_method'] = text
+            user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
+            bot.send_message(message.chat.id, f"📱 **আপনার {text} অ্যাকাউন্ট/নম্বরটি লিখে পাঠান:**", reply_markup=cancel_keyboard(), parse_mode="Markdown")
+
+    elif text == 'বিকাশ -> সর্বনিম্ন: ৫০ (-৫)':
+        if user_data['balance'] < 50.0:
+            bot.send_message(message.chat.id, f"❌ উইড্রোর জন্য পর্যাপ্ত ব্যালেন্স নেই।\nআপনার ব্যালেন্স: {user_data['balance']:.2f} BDT", reply_markup=main_keyboard(), parse_mode="Markdown")
+        else:
+            user_data['withdraw_method'] = text
+            user_data['state'] = 'WAITING_FOR_WITHDRAW_NUMBER'
+            bot.send_message(message.chat.id, f"📱 **আপনার {text} অ্যাকাউন্ট/নম্বরটি লিখে পাঠান:**", reply_markup=cancel_keyboard(), parse_mode="Markdown")
 
     elif text == '⏮ ফিরে যান':
         bot.send_message(message.chat.id, "🟣 **সিলেক্ট করুন:**", reply_markup=category_keyboard(), parse_mode="Markdown")
@@ -444,7 +462,7 @@ def handle_menu(message):
             f"✅ **সম্পন্ন কাজ:** {comp_tasks} টি\n"
             f"⏳ **রিভিউতে আছে:** {pend_tasks} টি"
         )
-        bot.reply_to(message, balance_balance_msg := balance_msg, parse_mode="Markdown")
+        bot.reply_to(message, balance_msg, parse_mode="Markdown")
 
     elif text == 'My Referrals':
         bot_username = bot.get_me().username
@@ -468,26 +486,4 @@ def handle_menu(message):
 
     elif text == '🧐 সাপোর্ট':
         support_msg = (
-            f"আপনার যেকোনো প্রশ্ন, সমস্যা বা পরামর্শের জন্য আমাদের সহায়তা টিমের সাথে যোগাযোগ করতে পারেন। আমরা আপনার অনুরোধ দ্রুত পর্যালোচনা করে যথাসম্ভব দ্রুত সমাধান দেওয়ার চেষ্টা করব。\n\n"
-            f"⚠️ **অনুগ্রহ করে অপ্রয়োজনীয় মেসেজ পাঠানো থেকে বিরত থাকুন।**"
-        )
-        
-        support_markup = types.InlineKeyboardMarkup(row_width=1)
-        support_markup.add(
-            types.InlineKeyboardButton("🛠️ এডমিন সাপোর্ট", url=ADMIN_SUPPORT_URL),
-            types.InlineKeyboardButton("🚀 অফিসিয়াল চ্যানেল", url=CHANNEL_URL)
-        )
-        
-        bot.send_message(message.chat.id, support_msg, reply_markup=support_markup, parse_mode="Markdown")
-
-    elif text == '🧑‍💼 আমি নতুন':
-        bot.reply_to(message, "🔰 **নিয়ম:** প্রতিদিন কাজ করুন এবং বন্ধুদের রেফার করে আয় বাড়ান।")
-
-    elif text == '🤪 কিভাবে কাজ করব':
-        bot.reply_to(message, "অ্যাকাউন্ট তৈরি করে প্রয়োজনীয় তথ্য (2FA বা Cookies) জমা দিন।")
-
-# ৩. Execution
-if __name__ == "__main__":
-    flask_thread = threading.Thread(target=run_flask)
-    flask_thread.start()
-    bot.infinity_polling()
+            f"আপনার যেকোনো প্রশ্ন, সমস্যা বা পরামর্শের জন্য আমা
