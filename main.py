@@ -354,7 +354,7 @@ def handle_menu(message):
         method = user_data.get('withdraw_method', '')
         balance = user_data['balance']
         
-        # ১. প্রথমে ব্যালেন্স চেক করা (সব মেথডের জন্য)
+        # ১. ব্যালেন্স চেক (USDT এর জন্য সর্বনিম্ন 0.3)
         if 'USDT' in method:
             min_limit = 0.3
             if balance < min_limit:
@@ -363,7 +363,7 @@ def handle_menu(message):
                 bot.send_message(message.chat.id, error_msg, reply_markup=main_keyboard(), parse_mode="Markdown")
                 return
                 
-            # ২. USDT অ্যাড্রেস লেন্থ চেক (কমপক্ষে ৩০ বা তার বেশি ক্যারেক্টার হতে হবে)
+            # ২. USDT অ্যাড্রেস অন্তত ৩০ ক্যারেক্টার হতে হবে, কম হলে ভুল দেখাবে
             if len(text.strip()) < 30:
                 bot.send_message(message.chat.id, "❌ **উইথড্র এড্রেসটি ভুল!**", reply_markup=cancel_keyboard())
                 return
@@ -486,4 +486,4 @@ def handle_menu(message):
             f"💵 **আপনার ব্যালেন্স**\n"
             f"━━━━━━━━━━━━━━━━━━━\n"
             f"💸 **ব্যালেন্স:** {bal:.2f} BDT\n"
-   
+         
