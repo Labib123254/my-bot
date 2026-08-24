@@ -51,7 +51,7 @@ def get_user_data(user_id):
             "referred_by": None,
             "state": None, 
             "withdraw_method": None, 
-            "withdraw_address": None, # নতুন ফিল্ড যুক্ত করা হলো
+            "withdraw_address": None,
             "generated_username": None,
             "generated_password": None,
             "task_type": None
@@ -333,7 +333,7 @@ def handle_menu(message):
         bot.send_message(message.chat.id, "টাকার পরিমাণ লিখুন", reply_markup=cancel_keyboard(), parse_mode="Markdown")
         return
 
-    # ধাপ ২: টাকার পরিমাণ পাওয়ার পর রিকোয়েস্ট কমপ্লিট করা হবে
+    # ধাপ ২: টাকার পরিমাণ পাওয়ার পর রিকোয়েস্ট কমপ্লিট হবে
     elif current_state == 'WAITING_FOR_WITHDRAW_AMOUNT':
         method = user_data.get('withdraw_method', 'N/A')
         address = user_data.get('withdraw_address', 'N/A')
@@ -341,7 +341,7 @@ def handle_menu(message):
         try:
             amount_to_log = float(text)
         except ValueError:
-            bot.send_message(message.chat.id, "⚠️ অনুগ্রহ করে সঠিক সংখ্যায় টাকার পরিমাণ লিখুন।", reply_markup=cancel_keyboard())
+            bot.send_message(message.chat.id, "⚠️ অনুগ্রহ করে সঠিক সংখ্যায় টাকার পরিমাণ লিখুন।", reply_markup=cancel_keyboard(), parse_mode="Markdown")
             return
 
         min_limit = 0.3 if "USDT" in method else (30.0 if "মোবাইল" in method else 50.0)
@@ -498,4 +498,4 @@ def handle_menu(message):
             types.InlineKeyboardButton("🚀 অফিসিয়াল চ্যানেল", url=CHANNEL_URL)
         )
         
-        bo
+        bot.send_m
