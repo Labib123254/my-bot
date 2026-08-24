@@ -7,16 +7,16 @@ from flask import Flask
 import telebot
 from telebot import types
 
-# ১. Web Server setup (Render-এর জন্য সরাসরি মেইন প্রসেসে রাখা হলো)
+# ১. ফ্লাস্ক সার্ভার সেটআপ
 app = Flask(__name__)
 
 @app.route('/')
 def home():
     return "Bot is running live 24/7!"
 
-# ২. Bot setup
+# ২. টেলিগ্রাম বোট সেটআপ
 TOKEN = '8720565653:AAFltxQwffiTi5DmTwQKud-Wh1SkZlyVHm8'
-bot = telebot.TeleBot(TOKEN)
+bot = telebot.TeleBot(TOKEN, threaded=False)
 
 CHANNEL_USERNAME = "@incomex1954"
 CHANNEL_URL = "https://t.me/incomex1954"
@@ -490,4 +490,6 @@ def handle_menu(message):
         support_msg = (
             f"আপনার যেকোনো প্রশ্ন, সমস্যা বা পরামর্শের জন্য আমাদের সহায়তা টিমের সাথে যোগাযোগ করতে পারেন। আমরা আপনার অনুরোধ দ্রুত পর্যালোচনা করে যথাসম্ভব দ্রুত সমাধান দেওয়ার চেষ্টা করব。\n\n"
             f"⚠️ **অনুগ্রহ করে অপ্রয়োজনীয় মেসেজ পাঠানো থেকে বিরত থাকুন।**"
-     
+        )
+        
+ 
