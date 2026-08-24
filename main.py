@@ -22,11 +22,13 @@ def run_flask():
 TOKEN = '8720565653:AAFltxQwffiTi5DmTwQKud-Wh1SkZlyVHm8'
 bot = telebot.TeleBot(TOKEN)
 
-# আপনার পাবলিক চ্যানেলের ইউজারনেম
-CHANNEL_ID = "@hi54854"
+# আপনার চ্যানেল আইডি বা ইউজারনেম
+CHANNEL_USERNAME = "@INCOMEXSUPPORT"
+CHANNEL_URL = "https://t.me/INCOMEXSUPPORT"
+CHANNEL_ID = "@hi54854" # কাজের নোটিফিকেশন পাঠানোর চ্যানেল
 
 users_db = {}
-tasks_list = []  # সব টাস্ক মেমোরিতে জমানোর জন্য
+tasks_list = []
 
 def get_user_data(user_id):
     if user_id not in users_db:
@@ -43,6 +45,16 @@ def get_user_data(user_id):
             "task_type": None
         }
     return users_db[user_id]
+
+# ইউজার চ্যানেলে জয়েন আছে কি না তা চেক করার ফাংশন
+def check_user_subscription(user_id):
+    try:
+        member = bot.get_chat_member(CHANNEL_USERNAME, user_id)
+        if member.status in ['member', 'creator', 'administrator']:
+            return True
+    except Exception as e:
+        print(f"Subscription Check Error: {e}")
+    return False
 
 def generate_random_username():
     names = ["Isabella Williams", "Sophia Brown", "Isabella Johnson", "Emma Davis", "Olivia Wilson"]
@@ -118,6 +130,13 @@ def withdraw_methods_keyboard():
     )
     return markup
 
+# সাবস্ক্রাইব করার ইনলাইন কিবোর্ড
+def sub_inline_keyboard():
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton("📢 Subscribe to channel", url=CHANNEL_URL))
+    markup.add(types.InlineKeyboardButton("✅ Check subscription", callback_data="check_sub"))
+    return markup
+
 # --- এডমিন কমান্ডসমূহ ---
 
 @bot.message_handler(commands=['gettasks'])
@@ -139,7 +158,6 @@ def get_all_tasks_file(message):
     
     file_data = io.BytesIO(file_content.encode('utf-8'))
     file_data.name = f"All_Tasks_Total_{len(tasks_list)}.txt"
-    
     bot.send_document(message.chat.id, file_data, caption=f"📊 **মোট {len(tasks_list)} টি কাজের ফাইল একসাথে ডাউনলোড করা হয়েছে।**", parse_mode="Markdown")
 
 @bot.message_handler(commands=['cleartasks'])
@@ -149,12 +167,11 @@ def clear_all_tasks(message):
     tasks_list = []
     bot.reply_to(message, f"🗑 **পূর্বের জমা হওয়া {count} টি টাস্ক ডাটা মুছে ফেলা হয়েছে।**", parse_mode="Markdown")
 
-# ১. ব্যালেন্স ও টাস্ক কাউন্ট বাড়ানোর এডমিন কমান্ড
 @bot.message_handler(commands=['addbalance'])
 def add_user_balance(message):
     args = message.text.split()
     if len(args) < 3:
-        bot.reply_to(message, "⚠️ **সঠিক নিয়ম:** `/addbalance <user_id> <amount>`\nউদাহরণ: `/addbalance 123456789 5.00`", parse_mode="Markdown")
+        bot.reply_to(message, "⚠️ **সঠিক নিয়ম:** `/addbalance <user_id> <amount>`", parse_mode="Markdown")
         return
     
     try:
@@ -184,42 +201,72 @@ def add_user_balance(message):
     except ValueError:
         bot.reply_to(message, "⚠️ ইউজার আইডি বা টাকার পরিমাণ সঠিক সংখ্যায় দিন।")
 
-# ২. নির্দিষ্ট ইউজারকে সরাসরি মেসেজ পাঠানোর এডমিন কমান্ড
 @bot.message_handler(commands=['sendmsg'])
 def send_custom_message_to_user(message):
     args = message.text.split(maxsplit=2)
-    
     if len(args) < 3:
-        bot.reply_to(message, "⚠️ **সঠিক নিয়ম:** `/sendmsg <user_id> <আপনার মেসেজ>`\nউদাহরণ: `/sendmsg 7882520506 ভাই আপনার কাজটা দারুণ হয়েছে!`", parse_mode="Markdown")
+        bot.reply_to(message, "⚠️ **সঠিক নিয়ম:** `/sendmsg <user_id> <আপনার মেসেজ>`", parse_mode="Markdown")
         return
     
     try:
         target_user_id = int(args[1])
         custom_message = args[2]
-        
         bot.send_message(target_user_id, f"📥 **অ্যাডমিনের মেসেজ:**\n\n{custom_message}", parse_mode="Markdown")
         bot.reply_to(message, f"✅ সফলভাবে User ID: `{target_user_id}` এর কাছে মেসেজ পাঠানো হয়েছে।", parse_mode="Markdown")
-        
-    except ValueError:
-        bot.reply_to(message, "⚠️ ইউজার আইডিটি সঠিক সংখ্যায় দিন।")
     except Exception as e:
         bot.reply_to(message, f"❌ মেসেজ পাঠানো সম্ভব হয়নি। কারণ: {e}")
 
-# --- মেসেজ হ্যান্ডলিং ---
+# --- স্টার্ট কমান্ড ও সাবস্ক্রিপশন চেক ---
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user_id = message.from_user.id
+    first_name = message.from_user.first_name
     get_user_data(user_id)
-    bot.send_message(
-        message.chat.id, 
-        f"হ্যালো {message.from_user.first_name}!\nনিচের মেনু থেকে একটি অপশন বেছে নিন:", 
-        reply_markup=main_keyboard()
-    )
+    
+    # ইউজার চ্যানেলে জয়েন আছে কি না চেক করা
+    if not check_user_subscription(user_id):
+        text = f"📢 To use this bot you must subscribe to our channel: {CHANNEL_USERNAME}\n\n👇 Use the buttons below."
+        bot.send_message(message.chat.id, text, reply_markup=sub_inline_keyboard(), parse_mode="Markdown")
+    else:
+        welcome_msg = (
+            f"🥰 স্বাগতম, {first_name}!\n"
+            f"💎কাজ শুরু করতে নিচের অপশনগুলো ব্যবহার করুন 🔽"
+        )
+        bot.send_message(message.chat.id, welcome_msg, reply_markup=main_keyboard(), parse_mode="Markdown")
+
+# ইনলাইন বাটনের 'Check subscription' ক্লিক হ্যান্ডেল করার জন্য
+@bot.callback_query_handler(func=lambda call: call.data == "check_sub")
+def verify_subscription(call):
+    user_id = call.from_user.id
+    first_name = call.from_user.first_name
+    
+    if check_user_subscription(user_id):
+        bot.answer_callback_query(call.id, "✅ ধন্যবাদ! আপনার সাবস্ক্রিপশন নিশ্চিত করা হয়েছে।")
+        try:
+            bot.delete_message(call.message.chat.id, call.message.message_id)
+        except:
+            pass
+        
+        welcome_msg = (
+            f"🥰 স্বাগতম, {first_name}!\n"
+            f"💎কাজ শুরু করতে নিচের অপশনগুলো ব্যবহার করুন 🔽"
+        )
+        bot.send_message(call.message.chat.id, welcome_msg, reply_markup=main_keyboard(), parse_mode="Markdown")
+    else:
+        bot.answer_callback_query(call.id, "❌ আপনি এখনো আমাদের চ্যানেলে জয়েন করেননি! দয়া করে আগে জয়েন করুন।", show_alert=True)
+
+# --- মেসেজ হ্যান্ডলিং ---
 
 @bot.message_handler(func=lambda message: True)
 def handle_menu(message):
     user_id = message.from_user.id
+    
+    if not check_user_subscription(user_id):
+        text = f"📢 To use this bot you must subscribe to our channel: {CHANNEL_USERNAME}\n\n👇 Use the buttons below."
+        bot.send_message(message.chat.id, text, reply_markup=sub_inline_keyboard(), parse_mode="Markdown")
+        return
+
     user_data = get_user_data(user_id)
     text = message.text
 
@@ -228,7 +275,6 @@ def handle_menu(message):
         bot.send_message(message.chat.id, "❌ **বাতিল করা হয়েছে।**", reply_markup=main_keyboard(), parse_mode="Markdown")
         return
 
-    # ১. ২FA বা Facebook Cookies জমার পার্ট
     if user_data.get('state') in ['WAITING_FOR_2FA', 'WAITING_FOR_FB_COOKIES']:
         current_state = user_data.get('state')
         user_data['state'] = None
@@ -266,7 +312,6 @@ def handle_menu(message):
         bot.send_message(message.chat.id, success_reply, reply_markup=main_keyboard(), parse_mode="Markdown")
         return
 
-    # ২. উইথড্র পার্ট
     elif user_data.get('state') == 'WAITING_FOR_WITHDRAW_NUMBER':
         method = user_data.get('withdraw_method', 'N/A')
         amount = user_data['balance']
@@ -300,7 +345,6 @@ def handle_menu(message):
     elif text == '📘 Facebook কাজ':
         username = generate_random_username()
         password = generate_random_password()
-        
         user_data['generated_username'] = username
         user_data['generated_password'] = password
         user_data['task_type'] = "📘 Facebook কাজ"
@@ -316,7 +360,6 @@ def handle_menu(message):
     elif text == '📷 ইনস্টাগ্রাম 2fa (৳2.70)':
         username = generate_random_username()
         password = generate_random_password()
-        
         user_data['generated_username'] = username
         user_data['generated_password'] = password
         user_data['task_type'] = "📷 ইনস্টাগ্রাম কাজ"
@@ -375,7 +418,7 @@ def handle_menu(message):
         bot.reply_to(message, "সাহায্যের জন্য অ্যাডমিন ইউজারনেমে যোগাযোগ করুন।")
 
     elif text == '🧑‍💼 আমি নতুন':
-        bot.reply_to(message, "🔰 **নিয়ম:** প্রতিদিন কাজ করুন এবং বন্ধুদের রেফার করে আয় বাড়ান।", parse_mode="Markdown")
+        bot.reply_to(message, "🔰 **নিয়ম:** প্রতিদিন কাজ করুন এবং বন্ধুদের রেফার করে আয় বাড়ান।")
 
     elif text == '🤪 কিভাবে কাজ করব':
         bot.reply_to(message, "অ্যাকাউন্ট তৈরি করে প্রয়োজনীয় তথ্য (2FA বা Cookies) জমা দিন।")
