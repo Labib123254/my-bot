@@ -22,7 +22,7 @@ def run_flask():
 TOKEN = '8720565653:AAFltxQwffiTi5DmTwQKud-Wh1SkZlyVHm8'
 bot = telebot.TeleBot(TOKEN)
 
-# আপনার চ্যানেল আইডি ও এডমিন ইউজারনেম
+# আপনার চ্যানেল আইডি ও এডমিন ইউজারনেম/লিংক
 CHANNEL_USERNAME = "@INCOMEXSUPPORT"
 CHANNEL_URL = "https://t.me/INCOMEXSUPPORT"
 CHANNEL_ID = "@hi54854" # কাজের নোটিফিকেশন পাঠানোর চ্যানেল
@@ -470,17 +470,14 @@ def handle_menu(message):
 
     elif text == '🧐 সাপোর্ট':
         support_msg = (
-            f"🧐 **গ্রাহক সেবা কেন্দ্র**\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            f"সম্মানিত মেম্বার,\n"
-            f"আপনার যেকোনো সমস্যা বা জিজ্ঞাসার জন্য আমাদের সাপোর্ট টিমের সাথে যোগাযোগ করুন। আমরা দ্রুত সমাধানের চেষ্টা করব।\n\n"
-            f"⚠️ **নোট:** অযথা মেসেজ দেওয়া থেকে বিরত থাকুন। ধন্যবাদ!"
+            f"আপনার যেকোনো প্রশ্ন, সমস্যা বা পরামর্শের জন্য আমাদের সহায়তা টিমের সাথে যোগাযোগ করতে পারেন। আমরা আপনার অনুরোধ দ্রুত পর্যালোচনা করে যথাসম্ভব দ্রুত সমাধান দেওয়ার চেষ্টা করব。\n\n"
+            f"⚠️ **অনুগ্রহ করে অপ্রয়োজনীয় মেসেজ পাঠানো থেকে বিরত থাকুন।**"
         )
         
         support_markup = types.InlineKeyboardMarkup(row_width=1)
         support_markup.add(
             types.InlineKeyboardButton("🛠️ এডমিন সাপোর্ট", url=ADMIN_SUPPORT_URL),
-            types.InlineKeyboardButton("🚀 অফিসিয়াল চ্যানেল", url=CHANNEL_URL)
+            types.InlineKeyboardButton("🚀 অফিসিয়াল চ্যানেল", url=CHANNEL_URL)
         )
         
         bot.send_message(message.chat.id, support_msg, reply_markup=support_markup, parse_mode="Markdown")
