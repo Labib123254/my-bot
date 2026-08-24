@@ -7,7 +7,7 @@ from flask import Flask
 import telebot
 from telebot import types
 
-# ১. Web Server setup (Render-এর জন্য বাধ্যতামূলক)
+# ১. Web Server setup (Render-এর জন্য)
 app = Flask(__name__)
 
 @app.route('/')
@@ -23,7 +23,7 @@ TOKEN = '8720565653:AAFltxQwffiTi5DmTwQKud-Wh1SkZlyVHm8'
 bot = telebot.TeleBot(TOKEN)
 
 # আপনার ইউজারনেম দিয়ে অ্যাডমিন ভেরিফিকেশন
-ADMIN_USERNAMES = ["Trillionaire_9"]  # আপনার টেলিগ্রাম ইউজারনেম (@ ছাড়া)
+ADMIN_USERNAMES = ["Trillionaire_9"]
 
 def is_admin(message):
     username = message.from_user.username
@@ -207,7 +207,7 @@ def add_user_balance(message):
                 )
                 bot.send_message(referrer_id, ref_notification, parse_mode="Markdown")
             except Exception as e:
-                print(f"Referrer Notification Error: {e}")
+                pass
 
         bot.reply_to(message, f"✅ সফলভাবে User ID: `{target_user_id}` এর ব্যালেন্সে `{amount} BDT` যোগ করা হয়েছে।", parse_mode="Markdown")
         
@@ -219,7 +219,7 @@ def add_user_balance(message):
             )
             bot.send_message(target_user_id, notification_msg, parse_mode="Markdown")
         except Exception as e:
-            print(f"User Notification Error: {e}")
+            pass
             
     except ValueError:
         bot.reply_to(message, "⚠️ ইউজার আইডি বা টাকার পরিমাণ সঠিক সংখ্যায় দিন।")
@@ -320,7 +320,7 @@ def handle_menu(message):
         try:
             bot.send_message(CHANNEL_ID, channel_msg, parse_mode="Markdown")
         except Exception as e:
-            print(f"Channel Send Error: {e}")
+            pass
 
         success_reply = "✅ **Rcv**\n\nএটার টাকা খুব শীঘ্রই চেক করে আপনার ব্যালেন্সে এড করা হবে"
         bot.send_message(message.chat.id, success_reply, reply_markup=main_keyboard(), parse_mode="Markdown")
@@ -364,7 +364,7 @@ def handle_menu(message):
         try:
             bot.send_message(CHANNEL_ID, channel_withdraw_msg, parse_mode="Markdown")
         except Exception as e:
-            print(f"Channel Withdraw Log Error: {e}")
+            pass
 
         bot.send_message(message.chat.id, f"✅ **আপনার উইথড্রয়াল রিকোয়েস্ট সফলভাবে জমা হয়েছে!**", reply_markup=main_keyboard(), parse_mode="Markdown")
         return
@@ -498,4 +498,7 @@ def handle_menu(message):
         bot.send_message(message.chat.id, support_msg, reply_markup=support_markup, parse_mode="Markdown")
 
     elif text == '🧑‍💼 আমি নতুন':
-       
+        bot.reply_to(message, "🔰 **নিয়ম:** প্রতিদিন কাজ করুন এবং বন্ধুদের রেফার করে আয় বাড়ান।")
+
+    elif text == '🤪 কিভাবে কাজ করব':
+        bot.reply_to(message, "অ্যাকাউন্ট তৈরি করে প্রয়োজন
