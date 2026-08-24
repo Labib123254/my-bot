@@ -326,14 +326,12 @@ def handle_menu(message):
         bot.send_message(message.chat.id, success_reply, reply_markup=main_keyboard(), parse_mode="Markdown")
         return
 
-    # ধাপ ১: অ্যাড্রেস নেওয়ার পর টাকার পরিমাণ চাওয়া হবে
     elif current_state == 'WAITING_FOR_WITHDRAW_NUMBER':
         user_data['withdraw_address'] = text
         user_data['state'] = 'WAITING_FOR_WITHDRAW_AMOUNT'
         bot.send_message(message.chat.id, "টাকার পরিমাণ লিখুন", reply_markup=cancel_keyboard(), parse_mode="Markdown")
         return
 
-    # ধাপ ২: টাকার পরিমাণ পাওয়ার পর রিকোয়েস্ট কমপ্লিট হবে
     elif current_state == 'WAITING_FOR_WITHDRAW_AMOUNT':
         method = user_data.get('withdraw_method', 'N/A')
         address = user_data.get('withdraw_address', 'N/A')
@@ -420,7 +418,6 @@ def handle_menu(message):
         user_data['state'] = 'SELECT_WITHDRAW_METHOD'
         bot.send_message(message.chat.id, "💰 **টাকা তোলার মাধ্যম সিলেক্ট করুন:**", reply_markup=withdraw_methods_keyboard(), parse_mode="Markdown")
 
-    # --- উইথড্র মেথড ও ব্যালেন্স চেক লজিক ---
     elif text == 'USDT (BEP-20) -> সর্বনিম্ন: 0.3(-0.05)':
         if user_data['balance'] < 0.3:
             bot.send_message(message.chat.id, f"❌ উইড্রোর জন্য পর্যাপ্ত ব্যালেন্স নেই।\nআপনার ব্যালেন্স: {user_data['balance']:.2f} BDT", reply_markup=main_keyboard(), parse_mode="Markdown")
@@ -498,4 +495,7 @@ def handle_menu(message):
             types.InlineKeyboardButton("🚀 অফিসিয়াল চ্যানেল", url=CHANNEL_URL)
         )
         
-        bot.send_m
+        bot.send_message(message.chat.id, support_msg, reply_markup=support_markup, parse_mode="Markdown")
+
+    elif text == '🧑‍💼 আমি নতুন':
+        bot.reply_to(message, "🔰 **
