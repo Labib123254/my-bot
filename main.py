@@ -494,11 +494,17 @@ def handle_menu(message):
     elif text == '🤪 কিভাবে কাজ করব':
         bot.reply_to(message, "অ্যাকাউন্ট তৈরি করে প্রয়োজনীয় তথ্য (2FA বা Cookies) জমা দিন।")
 
-# ৩. Execution
+# ৩. Execution (লুপ ছাড়াই সরাসরি স্মুথ পোেলিং)
 if __name__ == "__main__":
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.daemon = True
     flask_thread.start()
     
+    # পুরোনো প্রসেস ক্লিয়ার করে ফ্রেশ স্টার্ট
+    try:
+        bot.remove_webhook()
+    except Exception as e:
+        pass
+        
     bot.infinity_polling(skip_pending=True)
         
