@@ -208,7 +208,7 @@ def withdraw_methods_keyboard():
     markup.add(
         types.KeyboardButton('USDT (BEP-20) -> সর্বনিম্ন: 0.3(-0.05)'),
         types.KeyboardButton('মোবাইল রিচার্জ -> সর্বনিম্ন: ৩০(-৫)'),
-        types.KeyboardButton('বিকাশ -> সর্বনিম্ন: ৫০ (-⁵)'),
+        types.KeyboardButton('বিকাশ -> সর্বনিম্ন: ৫০ (-৫)'),
         types.KeyboardButton('❌ বাতিল')
     )
     return markup
@@ -229,7 +229,7 @@ def webhook():
     else:
         return "Invalid Data", 403
 
-# --- এডমিন কমান্ডসমূহ (ডাটাবেজ যুক্ত) ---
+# --- এডমিন কমান্ডসমূহ ---
 
 @bot.message_handler(commands=['gettasks'])
 def get_all_tasks_file(message):
@@ -306,7 +306,6 @@ def add_user_balance(message):
         except:
             pass
 
-        # ১০% রেফার কমিশন হিসাব
         referrer_id = target_user.get('referred_by')
         if referrer_id:
             commission = amount * 0.10
@@ -418,7 +417,6 @@ def handle_menu(message):
         
         update_user_data(user_id, {"pending_tasks": user_data['pending_tasks'] + 1})
         
-        # টাস্কটি সরাসরি ডাটাবেজে সেভ করা হলো
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute('''
@@ -531,4 +529,4 @@ def handle_menu(message):
         bot.send_message(message.chat.id, "📝 **আপনার ফেসবুক অ্যাকাউন্টের কুকিজটি দিন:** 🎯", reply_markup=cancel_keyboard(), parse_mode="Markdown")
     elif text == 'টাকা উত্তোলন':
         update_user_data(user_id, {"state": 'SELECT_WITHDRAW_METHOD'})
-        bot.send_message(message.chat.id, 
+        bot.send_message(message.chat.id, "💰 **মাধ্যম সিলেক্ট করুন:**", reply_markup=withdraw_methods_keyboard(), parse_mode="Markdown"
