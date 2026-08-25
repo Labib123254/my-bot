@@ -418,7 +418,7 @@ def handle_menu(message):
         
         update_user_data(user_id, {"pending_tasks": user_data['pending_tasks'] + 1})
         
-        # টাস্কটি সরাসরি ডাটাবেজে সেভ করা হলো (RAM-এর পরিবর্তে)
+        # টাস্কটি সরাসরি ডাটাবেজে সেভ করা হলো
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute('''
@@ -531,4 +531,4 @@ def handle_menu(message):
         bot.send_message(message.chat.id, "📝 **আপনার ফেসবুক অ্যাকাউন্টের কুকিজটি দিন:** 🎯", reply_markup=cancel_keyboard(), parse_mode="Markdown")
     elif text == 'টাকা উত্তোলন':
         update_user_data(user_id, {"state": 'SELECT_WITHDRAW_METHOD'})
-        bot.send_message(messag
+        bot.send_message(message.chat.id, "💰 **ম
