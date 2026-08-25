@@ -257,7 +257,7 @@ def get_all_tasks_file(message):
             f"    Pass: {item['acc_pass']}\n"
             f"    Data: {item['task_data']}\n"
             f"----------------------------------------\n"
-    )
+        )
     
     file_data = io.BytesIO(file_content.encode('utf-8'))
     file_data.name = f"All_Tasks_{len(tasks_rows)}.txt"
@@ -531,4 +531,4 @@ def handle_menu(message):
         bot.send_message(message.chat.id, "📝 **আপনার ফেসবুক অ্যাকাউন্টের কুকিজটি দিন:** 🎯", reply_markup=cancel_keyboard(), parse_mode="Markdown")
     elif text == 'টাকা উত্তোলন':
         update_user_data(user_id, {"state": 'SELECT_WITHDRAW_METHOD'})
-        bot.send_message(message.chat.id, "💰 **ম
+        bot.send_message(message.chat.id, "💰
